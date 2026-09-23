@@ -1,0 +1,131 @@
+# ==============================================================================
+# FraudGuard Application Configuration
+# Environment: Production-Ready with sensible local development defaults
+# ==============================================================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: fraudguard-backend
+
+  # ----------------------------------------------------------------------------
+  # Relational Database Configuration (PostgreSQL 16)
+  # ----------------------------------------------------------------------------
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/fraudguard_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10 # Limits concurrent connections to avoid saturating Postgres
+      minimum-idle: 2       # Keeps warm connections ready for low-latency transaction ingestion
+      connection-timeout: 30000 # 30s timeout before failing connection acquisition
+      idle-timeout: 600000      # 10m idle timeout before retiring unused connection
+
+  # ----------------------------------------------------------------------------
+  # JPA & Hibernate ORM Configuration
+  # ----------------------------------------------------------------------------
+  jpa:
+    # Strictly validate JPA entity mappings against Flyway-managed schema without altering DB
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc:
+          batch_size: 20 # Batches multi-entity writes for rule hit audits and telemetry
+    open-in-view: false # Prevents lazy loading database queries during view rendering
+
+  # ----------------------------------------------------------------------------
+  # Flyway Database Migration
+  # ----------------------------------------------------------------------------
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true # Safely initializes migration baseline if DB pre-exists
+
+  # ----------------------------------------------------------------------------
+  # Redis 7 Cache & Sliding Window State
+  # ----------------------------------------------------------------------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8 # Concurrent connection cap for Lettuce client pool
+          min-idle: 2
+
+  # ----------------------------------------------------------------------------
+  # Apache Kafka Event Streaming Configuration
+  # ----------------------------------------------------------------------------
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all # Guarantees durable leader + replica persistence for financial events
+      retries: 3
+      properties:
+        enable.idempotence: true # Prevents duplicate events across transient network retries
+        compression.type: snappy # Low CPU overhead compression for high-throughput messaging
+    consumer:
+      group-id: fraudguard-main
+      auto-offset-reset: earliest
+      enable-auto-commit: false # Requires manual acknowledgment after persistent processing
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# ------------------------------------------------------------------------------
+# FraudGuard Domain & Security Properties
+# ------------------------------------------------------------------------------
+fraudguard:
+  jwt:
+    # Secret must be at least 256 bits (32 characters) for HMAC-SHA256
+    secret: ${JWT_SECRET:change-me-in-production-min-32-chars!!}
+    expiry-ms: ${JWT_EXPIRY_MS:86400000} # 24 hours token lifespan
+  external:
+    ipqualityscore:
+      api-key: ${IPQS_API_KEY:}
+      base-url: https://www.ipqualityscore.com/api/json/ip
+      timeout-ms: 4000 # Strict outbound timeout to maintain checkout SLA (<200ms)
+      cache-ttl-hours: 6
+    ipapi:
+      base-url: http://ip-api.com/json
+      timeout-ms: 3000
+      cache-ttl-hours: 24
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  velocity:
+    window-minutes: 5 # Rolling time window for rapid burst transaction evaluation
+    user-limit: 3     # Maximum normal transactions per user per window before penalty
+    ip-limit: 5       # Maximum transactions per public IP per window before penalty
+
+# ------------------------------------------------------------------------------
+# Actuator Health & Metrics Observability
+# ------------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# ------------------------------------------------------------------------------
+# Logging Hierarchy
+# ------------------------------------------------------------------------------
+logging:
+  level:
+    com.fraudguard: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
