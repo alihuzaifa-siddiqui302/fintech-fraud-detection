@@ -27,7 +27,7 @@ public class IpIntelligence {
     @Column(name = "ip_address", length = 45, nullable = false)
     private String ipAddress;
 
-    @Column(name = "country_code", length = 2)
+    @Column(name = "country_code", columnDefinition = "char(2)", length = 2)
     private String countryCode;
 
     @Column(name = "country_name", length = 100)

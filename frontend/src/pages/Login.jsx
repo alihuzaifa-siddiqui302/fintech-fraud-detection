@@ -223,7 +223,7 @@ export const Login = () => {
             <button
               type="button"
               disabled={loading}
-              onClick={() => handleQuickLogin('customer@fraudguard.io', 'Customer123!')}
+              onClick={() => handleQuickLogin('customer@fraudguard.io', 'demo1234')}
               className="flex items-center justify-center gap-2 p-3 rounded-xl border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 font-medium text-xs transition-all duration-150 disabled:opacity-50"
             >
               <span>🛒</span>
@@ -233,7 +233,7 @@ export const Login = () => {
             <button
               type="button"
               disabled={loading}
-              onClick={() => handleQuickLogin('analyst@fraudguard.io', 'Analyst123!')}
+              onClick={() => handleQuickLogin('analyst@fraudguard.io', 'demo1234')}
               className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-medium text-xs transition-all duration-150 disabled:opacity-50 shadow-sm"
             >
               <span>🔍</span>

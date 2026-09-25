@@ -38,13 +38,13 @@ public class Transaction {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false, length = 3)
+    @Column(nullable = false, columnDefinition = "char(3)", length = 3)
     private String currency;
 
     @Column(name = "ip_address", nullable = false, length = 45)
     private String ipAddress;
 
-    @Column(name = "ip_country", length = 2)
+    @Column(name = "ip_country", columnDefinition = "char(2)", length = 2)
     private String ipCountry;
 
     @Column(name = "ip_city", length = 100)
