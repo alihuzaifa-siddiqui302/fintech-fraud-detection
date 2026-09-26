@@ -113,6 +113,7 @@ public class IpApiClient {
             String isp,
             String org,
             String query,
+            String timezone,
             boolean proxy,
             boolean hosting
     ) {
@@ -120,7 +121,7 @@ public class IpApiClient {
          * Factory method providing a safe empty fallback instance.
          */
         public static IpApiResponse empty() {
-            return new IpApiResponse("fail", null, null, null, null, null, null, false, false);
+            return new IpApiResponse("fail", null, null, null, null, null, null, null, false, false);
         }
     }
 }

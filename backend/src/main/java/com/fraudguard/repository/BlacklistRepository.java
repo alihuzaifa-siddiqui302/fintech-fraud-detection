@@ -45,4 +45,12 @@ public interface BlacklistRepository extends JpaRepository<Blacklist, Long> {
      * @return List of matching Blacklists
      */
     List<Blacklist> findByTargetType(String targetType);
+
+    /**
+     * Filters blacklist entries by entity type ordered by newest first.
+     *
+     * @param targetType entity type to filter by
+     * @return List of matching Blacklists ordered chronologically descending
+     */
+    List<Blacklist> findByTargetTypeOrderByCreatedAtDesc(String targetType);
 }

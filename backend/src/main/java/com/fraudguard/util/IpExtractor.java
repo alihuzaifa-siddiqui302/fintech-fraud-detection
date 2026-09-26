@@ -24,6 +24,16 @@ public class IpExtractor {
      * @param request inbound HTTP servlet request
      * @return validated IPv4 or IPv6 address string, or "unknown" if unresolvable
      */
+    /**
+     * Extracts and validates originating client IP address (convenience alias).
+     *
+     * @param request inbound HTTP request
+     * @return client IP string
+     */
+    public String extractClientIp(HttpServletRequest request) {
+        return extractIp(request);
+    }
+
     public String extractIp(HttpServletRequest request) {
         if (request == null) {
             return UNKNOWN_IP;

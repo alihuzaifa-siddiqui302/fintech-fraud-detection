@@ -117,4 +117,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      */
     @Query("SELECT COALESCE(AVG(t.riskScore), 0) FROM Transaction t WHERE t.createdAt > :after")
     double averageRiskScoreAfter(@Param("after") OffsetDateTime after);
+
+    /**
+     * Counts all transactions created after a given timestamp.
+     *
+     * @param after starting timestamp boundary
+     * @return count of transactions
+     */
+    long countByCreatedAtAfter(OffsetDateTime after);
+
+    /**
+     * Flexible multi-criteria search for compliance analysts matching on status, IP address, or transaction UUID prefix.
+     *
+     * @param status adjudication status filter (e.g. ALL, PENDING_REVIEW, BLOCKED, APPROVED)
+     * @param search keyword matching IP address or transaction ID prefix
+     * @param pageable pagination parameters
+     * @return Page of matching transactions
+     */
+    @Query("SELECT t FROM Transaction t WHERE " +
+           "(:status IS NULL OR :status = '' OR :status = 'ALL' OR t.status = :status) AND " +
+           "(:search IS NULL OR :search = '' OR LOWER(t.ipAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.id) LIKE LOWER(CONCAT(:search, '%'))) " +
+           "ORDER BY t.createdAt DESC")
+    Page<Transaction> findByStatusAndSearch(@Param("status") String status, @Param("search") String search, Pageable pageable);
 }
+

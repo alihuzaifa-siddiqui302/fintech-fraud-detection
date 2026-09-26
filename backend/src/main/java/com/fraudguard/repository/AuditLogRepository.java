@@ -48,4 +48,23 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
      * @return Page of entity audit history
      */
     Page<AuditLog> findByEntityTypeAndEntityId(String entityType, String entityId, Pageable pageable);
+
+    /**
+     * Searches audit logs filtering optionally by action and actor email.
+     *
+     * @param action optional action classification
+     * @param actorEmail optional actor email substring
+     * @param pageable pagination parameters
+     * @return Page of matching audit logs
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM AuditLog a WHERE " +
+           "(:action IS NULL OR :action = '' OR a.action = :action) AND " +
+           "(:actorEmail IS NULL OR :actorEmail = '' OR LOWER(a.actorEmail) LIKE LOWER(CONCAT('%', :actorEmail, '%'))) " +
+           "ORDER BY a.createdAt DESC")
+    Page<AuditLog> findByActionAndActorEmail(
+            @org.springframework.data.repository.query.Param("action") String action,
+            @org.springframework.data.repository.query.Param("actorEmail") String actorEmail,
+            Pageable pageable
+    );
 }
+

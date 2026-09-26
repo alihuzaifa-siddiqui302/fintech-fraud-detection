@@ -52,6 +52,8 @@ public class EnrichedTransactionContext {
     private boolean isProxy;
     private boolean isHostingIp;
     private int ipqsFraudScore;
+    private Boolean timezoneMismatch;
+    private String ipTimezone;
 
     // -------------------------------------------------------------------------
     // Device & Fingerprint Intelligence Signals

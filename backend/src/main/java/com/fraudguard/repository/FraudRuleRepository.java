@@ -27,4 +27,12 @@ public interface FraudRuleRepository extends JpaRepository<FraudRule, Long> {
      * @return Optional containing matched FraudRule or empty if not found
      */
     Optional<FraudRule> findByRuleCode(String ruleCode);
+
+    /**
+     * Retrieves all fraud rules sorted by risk weight descending for analyst rulebook configuration.
+     *
+     * @return List of all rules ordered by risk weight descending
+     */
+    List<FraudRule> findAllByOrderByRiskWeightDesc();
 }
+

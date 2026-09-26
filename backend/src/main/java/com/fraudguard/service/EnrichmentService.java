@@ -91,6 +91,11 @@ public class EnrichmentService {
                 ? ipApi.isp()
                 : ipqs.isp();
 
+        String ipTimezone = ipApi.timezone();
+        boolean timezoneMismatch = Boolean.TRUE.equals(request.getSimulateForeignIp())
+                || (request.getBrowserTimezone() != null && ipTimezone != null && !ipTimezone.isBlank()
+                    && !request.getBrowserTimezone().equalsIgnoreCase(ipTimezone));
+
         // 4. Device Fingerprint Resolution & History Check
         String effectiveFingerprint = Boolean.TRUE.equals(request.getSimulateNewDevice())
                 ? UUID.randomUUID().toString()
@@ -165,6 +170,8 @@ public class EnrichmentService {
                 .isProxy(isProxy)
                 .isHostingIp(isHostingIp)
                 .ipqsFraudScore(ipqsFraudScore)
+                .timezoneMismatch(timezoneMismatch)
+                .ipTimezone(ipTimezone)
                 // Device Intelligence
                 .isNewDevice(isNewDevice)
                 .deviceSharedAcrossAccounts(deviceSharedAcrossAccounts)
