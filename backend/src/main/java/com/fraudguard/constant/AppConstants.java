@@ -63,6 +63,8 @@ public final class AppConstants {
         public static final String TXN_RAW = "fraudguard.txn.raw";
         public static final String TXN_DECIDED = "fraudguard.txn.decided";
         public static final String AUDIT_EVENTS = "fraudguard.audit.events";
+        public static final String TXN_RAW_DLT = "fraudguard.txn.raw.DLT";
+        public static final String AUDIT_EVENTS_DLT = "fraudguard.audit.events.DLT";
     }
 
     /**
