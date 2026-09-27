@@ -21,7 +21,8 @@ import com.fraudguard.entity.SessionSignal;
 import com.fraudguard.entity.Transaction;
 import com.fraudguard.entity.TransactionRuleHit;
 import com.fraudguard.entity.User;
-import com.fraudguard.event.TransactionKafkaEvent;
+import com.fraudguard.messaging.FraudGuardEventProducer;
+import com.fraudguard.messaging.event.TransactionKafkaEvent;
 import com.fraudguard.repository.AuditLogRepository;
 import com.fraudguard.repository.BlacklistRepository;
 import com.fraudguard.repository.FraudRuleRepository;
@@ -43,7 +44,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -69,7 +69,7 @@ public class AnalystService {
     private final DashboardStreamService dashboardStreamService;
     private final MapperService mapperService;
     private final ObjectMapper objectMapper;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final FraudGuardEventProducer eventProducer;
 
     private final Map<String, User> userCache = new ConcurrentHashMap<>();
 
@@ -417,34 +417,21 @@ public class AnalystService {
     }
 
     private void publishTxnDecidedEvent(Transaction txn, User analyst) {
-        try {
-            TransactionKafkaEvent event = TransactionKafkaEvent.builder()
-                    .eventType("TXN_DECIDED")
-                    .transactionId(txn.getId())
-                    .userId(txn.getUserId())
-                    .amount(txn.getAmount())
-                    .currency(txn.getCurrency())
-                    .ipAddress(txn.getIpAddress())
-                    .ipCountry(txn.getIpCountry())
-                    .riskScore(txn.getRiskScore())
-                    .status(txn.getStatus())
-                    .reviewedBy(analyst.getEmail())
-                    .resolutionNotes(txn.getResolutionNotes())
-                    .timestamp(OffsetDateTime.now())
-                    .build();
-
-            String payload = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(AppConstants.KafkaTopics.TXN_DECIDED, txn.getId(), payload)
-                    .whenComplete((res, ex) -> {
-                        if (ex != null) {
-                            log.warn("Kafka publication failed for decided transaction [{}]: {}",
-                                    txn.getId(), ex.getMessage());
-                        } else {
-                            log.debug("Successfully published decided transaction [{}] to Kafka", txn.getId());
-                        }
-                    });
-        } catch (Exception ex) {
-            log.warn("Failed to serialize or dispatch txn.decided event to Kafka: {}", ex.getMessage());
-        }
+        TransactionKafkaEvent event = new TransactionKafkaEvent(
+                txn.getId(),
+                txn.getUserId(),
+                txn.getAmount(),
+                txn.getCurrency(),
+                txn.getStatus(),
+                txn.getRiskScore(),
+                txn.getIpAddress(),
+                txn.getIpCountry(),
+                txn.getIsVpn() != null && txn.getIsVpn(),
+                txn.getIsTor() != null && txn.getIsTor(),
+                null,
+                OffsetDateTime.now(),
+                "TXN_DECIDED"
+        );
+        eventProducer.publishTransaction(event);
     }
 }

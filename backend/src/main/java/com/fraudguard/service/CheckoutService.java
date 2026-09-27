@@ -18,7 +18,8 @@ import com.fraudguard.entity.Transaction;
 import com.fraudguard.entity.TransactionBlacklistHit;
 import com.fraudguard.entity.TransactionRuleHit;
 import com.fraudguard.entity.User;
-import com.fraudguard.event.TransactionKafkaEvent;
+import com.fraudguard.messaging.FraudGuardEventProducer;
+import com.fraudguard.messaging.event.TransactionKafkaEvent;
 import com.fraudguard.repository.BlacklistRepository;
 import com.fraudguard.repository.FraudRuleRepository;
 import com.fraudguard.repository.SessionSignalRepository;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +61,7 @@ public class CheckoutService {
     private final DashboardStreamService dashboardStreamService;
     private final MapperService mapperService;
     private final ObjectMapper objectMapper;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final FraudGuardEventProducer eventProducer;
 
     /**
      * Evaluates and records a financial checkout transaction end-to-end.
@@ -230,37 +230,26 @@ public class CheckoutService {
     }
 
     private void publishKafkaEvent(Transaction txn, RiskEvaluationResult evalResult) {
-        try {
-            List<String> triggeredCodes = evalResult.getTriggeredRules().stream()
-                    .map(RuleResult::ruleCode)
-                    .toList();
+        List<String> triggeredCodes = evalResult.getTriggeredRules().stream()
+                .map(RuleResult::ruleCode)
+                .toList();
 
-            TransactionKafkaEvent event = TransactionKafkaEvent.builder()
-                    .eventType("TXN_EVALUATED")
-                    .transactionId(txn.getId())
-                    .userId(txn.getUserId())
-                    .amount(txn.getAmount())
-                    .currency(txn.getCurrency())
-                    .ipAddress(txn.getIpAddress())
-                    .ipCountry(txn.getIpCountry())
-                    .riskScore(txn.getRiskScore())
-                    .status(txn.getStatus())
-                    .triggeredRuleCodes(triggeredCodes)
-                    .timestamp(txn.getCreatedAt() != null ? txn.getCreatedAt() : OffsetDateTime.now())
-                    .build();
+        TransactionKafkaEvent event = new TransactionKafkaEvent(
+                txn.getId(),
+                txn.getUserId(),
+                txn.getAmount(),
+                txn.getCurrency(),
+                txn.getStatus(),
+                txn.getRiskScore(),
+                txn.getIpAddress(),
+                txn.getIpCountry(),
+                txn.getIsVpn() != null && txn.getIsVpn(),
+                txn.getIsTor() != null && txn.getIsTor(),
+                triggeredCodes,
+                txn.getCreatedAt() != null ? txn.getCreatedAt() : OffsetDateTime.now(),
+                "TXN_SUBMITTED"
+        );
 
-            String payload = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(AppConstants.KafkaTopics.TXN_RAW, txn.getId(), payload)
-                    .whenComplete((result, ex) -> {
-                        if (ex != null) {
-                            log.warn("Kafka event dispatch failed for transaction [{}]: {}", txn.getId(), ex.getMessage());
-                        } else {
-                            log.debug("Published transaction [{}] to Kafka topic [{}]",
-                                    txn.getId(), AppConstants.KafkaTopics.TXN_RAW);
-                        }
-                    });
-        } catch (Exception ex) {
-            log.warn("Failed to serialize or dispatch transaction Kafka event: {}", ex.getMessage());
-        }
+        eventProducer.publishTransaction(event);
     }
 }

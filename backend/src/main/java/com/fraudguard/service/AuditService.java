@@ -4,12 +4,12 @@ package com.fraudguard.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fraudguard.constant.AppConstants;
 import com.fraudguard.entity.AuditLog;
-import com.fraudguard.event.AuditKafkaEvent;
+import com.fraudguard.messaging.FraudGuardEventProducer;
+import com.fraudguard.messaging.event.AuditKafkaEvent;
 import com.fraudguard.repository.AuditLogRepository;
 import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +23,7 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final FraudGuardEventProducer eventProducer;
 
     /**
      * Records an immutable administrative or adjudication audit event.
@@ -70,29 +70,18 @@ public class AuditService {
         log.info("AUDIT | actor={} | action={} | entity={}:{}", actorEmail, action, entityType, entityId);
 
         // Secondary asynchronous Kafka broadcast
-        try {
-            AuditKafkaEvent event = AuditKafkaEvent.builder()
-                    .actorId(actorId)
-                    .actorEmail(actorEmail)
-                    .action(action)
-                    .entityType(entityType)
-                    .entityId(entityId)
-                    .ipAddress(ipAddress)
-                    .notes(notes)
-                    .timestamp(OffsetDateTime.now())
-                    .build();
-
-            String payload = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(AppConstants.KafkaTopics.AUDIT_EVENTS, entityId, payload)
-                    .whenComplete((result, ex) -> {
-                        if (ex != null) {
-                            log.warn("Kafka audit event publication failed for entity [{}:{}]: {}",
-                                    entityType, entityId, ex.getMessage());
-                        }
-                    });
-        } catch (Exception ex) {
-            log.warn("Failed to dispatch audit event to Kafka: {}", ex.getMessage());
-        }
+        AuditKafkaEvent event = new AuditKafkaEvent(
+                actorId,
+                actorEmail,
+                action,
+                entityType,
+                entityId,
+                beforeJson,
+                afterJson,
+                ipAddress,
+                OffsetDateTime.now()
+        );
+        eventProducer.publishAuditEvent(event);
     }
 
     private String serializeSafe(Object obj) {
