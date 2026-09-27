@@ -83,4 +83,23 @@ public class DashboardStreamService {
             }
         });
     }
+
+    /**
+     * Returns the concurrent map of active SSE emitters.
+     *
+     * @return map of emitter IDs to SseEmitter instances
+     */
+    public Map<String, SseEmitter> getEmitters() {
+        return emitters;
+    }
+
+    /**
+     * Removes an emitter by ID.
+     *
+     * @param emitterId emitter unique identifier
+     */
+    public void removeEmitter(String emitterId) {
+        emitters.remove(emitterId);
+    }
 }
+
