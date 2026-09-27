@@ -66,5 +66,26 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
             @org.springframework.data.repository.query.Param("actorEmail") String actorEmail,
             Pageable pageable
     );
+
+    /**
+     * Verifies if an audit log already exists for an entity and action.
+     *
+     * @param entityType domain entity type
+     * @param entityId target entity identifier
+     * @param action classification code
+     * @return true if record exists
+     */
+    boolean existsByEntityTypeAndEntityIdAndAction(String entityType, String entityId, String action);
+
+    /**
+     * Verifies if an audit log already exists for an entity, identifier, and creation timestamp.
+     *
+     * @param entityType domain entity type
+     * @param entityId target entity identifier
+     * @param createdAt timestamp
+     * @return true if record exists
+     */
+    boolean existsByEntityTypeAndEntityIdAndCreatedAt(String entityType, String entityId, java.time.OffsetDateTime createdAt);
 }
+
 
