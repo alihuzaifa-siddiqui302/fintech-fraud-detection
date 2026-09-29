@@ -60,6 +60,7 @@ public class AnalystService {
     private final TransactionRuleHitRepository transactionRuleHitRepository;
     private final SessionSignalRepository sessionSignalRepository;
     private final BlacklistRepository blacklistRepository;
+    private final TransactionBlacklistHitRepository transactionBlacklistHitRepository;
     private final FraudRuleRepository fraudRuleRepository;
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
@@ -316,6 +317,9 @@ public class AnalystService {
                 .orElseThrow(() -> new EntityNotFoundException("Analyst account not found: " + analystEmail));
 
         BlacklistDto beforeDto = mapperService.toBlacklistDto(entry, analyst);
+
+        // Remove linked transaction hits to satisfy foreign key integrity
+        transactionBlacklistHitRepository.deleteByBlacklistId(id);
 
         blacklistRepository.delete(entry);
 

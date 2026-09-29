@@ -158,9 +158,13 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.warn("Data integrity conflict on path: {}: {}", request.getRequestURI(), exception.getMessage());
+        String message = "A conflicting record already exists in the system";
+        if ("DELETE".equalsIgnoreCase(request.getMethod())) {
+            message = "Cannot delete record because related records still reference it";
+        }
         ErrorResponse errorResponse = new ErrorResponse(
                 "CONFLICT",
-                "A conflicting record already exists in the system",
+                message,
                 HttpStatus.CONFLICT.value(),
                 Instant.now(),
                 request.getRequestURI()

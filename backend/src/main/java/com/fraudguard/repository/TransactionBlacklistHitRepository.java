@@ -20,4 +20,11 @@ public interface TransactionBlacklistHitRepository extends JpaRepository<Transac
      * @return List of blacklist hit records
      */
     List<TransactionBlacklistHit> findByTransactionId(String transactionId);
+
+    /**
+     * Removes all transaction blacklist hit records associated with a specific blacklist ID.
+     *
+     * @param blacklistId blacklist identifier
+     */
+    void deleteByBlacklistId(Long blacklistId);
 }
