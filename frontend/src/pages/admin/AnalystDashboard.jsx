@@ -51,7 +51,7 @@ export const AnalystDashboard = () => {
   }, []);
 
   // 2. Fetch Transactions
-  const fetchTxnsData = useCallback(async (targetPage = 0, status = statusFilter, search = searchTerm) => {
+  const fetchTxnsData = useCallback(async (targetPage = 0, status = 'ALL', search = '') => {
     setTxnsLoading(true);
     try {
       const data = await getAnalystTransactions(status, targetPage, 15, search);
@@ -63,13 +63,23 @@ export const AnalystDashboard = () => {
     } finally {
       setTxnsLoading(false);
     }
-  }, [statusFilter, searchTerm, toast]);
+  }, [toast]);
 
-  // Initial load
+  // Keep latest refs for SSE callback without triggering reconnects
+  const stateRef = useRef({ statusFilter, searchTerm, page, fetchTxnsData, fetchMetricsData, toast });
+  useEffect(() => {
+    stateRef.current = { statusFilter, searchTerm, page, fetchTxnsData, fetchMetricsData, toast };
+  });
+
+  // Initial metrics load
   useEffect(() => {
     fetchMetricsData();
-    fetchTxnsData(0, statusFilter, searchTerm);
-  }, [fetchMetricsData, fetchTxnsData]);
+  }, [fetchMetricsData]);
+
+  // Fetch transactions on page or status filter change
+  useEffect(() => {
+    fetchTxnsData(page, statusFilter, searchTerm);
+  }, [fetchTxnsData, page, statusFilter]);
 
   // Metric Auto-refresh every 60s
   useEffect(() => {
@@ -87,7 +97,7 @@ export const AnalystDashboard = () => {
     return () => clearInterval(txnInterval);
   }, [fetchTxnsData, page, statusFilter, searchTerm]);
 
-  // 3. SSE Stream Connection with Bearer Token
+  // 3. SSE Stream Connection with Bearer Token - stable on [token]
   useEffect(() => {
     if (!token) return;
 
@@ -127,12 +137,16 @@ export const AnalystDashboard = () => {
                   setFlashingTxnId(event.transactionId);
                   setTimeout(() => setFlashingTxnId(null), 3000);
 
-                  // Refresh table and metrics
-                  fetchTxnsData(0, statusFilter, searchTerm);
-                  fetchMetricsData();
+                  // Refresh table and metrics using current state ref
+                  stateRef.current.fetchTxnsData(
+                    stateRef.current.page,
+                    stateRef.current.statusFilter,
+                    stateRef.current.searchTerm
+                  );
+                  stateRef.current.fetchMetricsData();
 
                   if (event.status === 'PENDING_REVIEW') {
-                    toast.warning(
+                    stateRef.current.toast.warning(
                       `High risk transaction ${event.transactionId.substring(0, 8)} flagged for review!`,
                       'SSE Review Alert'
                     );
@@ -146,7 +160,7 @@ export const AnalystDashboard = () => {
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          // Silent stream reconnect could be handled or logged
+          // Silent stream reconnect
         }
       }
     };
@@ -158,15 +172,16 @@ export const AnalystDashboard = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [token, fetchTxnsData, fetchMetricsData, statusFilter, searchTerm, toast]);
+  }, [token]);
 
   const handleFilterChange = (status) => {
     setStatusFilter(status);
-    fetchTxnsData(0, status, searchTerm);
+    setPage(0);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setPage(0);
     fetchTxnsData(0, statusFilter, searchTerm);
   };
 

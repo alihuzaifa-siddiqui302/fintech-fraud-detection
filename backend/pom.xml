@@ -24,6 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.12.3</jjwt.version>
         <flyway.version>10.11.0</flyway.version>
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>

@@ -57,15 +57,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
      * @param pageable pagination parameters
      * @return Page of matching audit logs
      */
-    @org.springframework.data.jpa.repository.Query("SELECT a FROM AuditLog a WHERE " +
-           "(:action IS NULL OR :action = '' OR a.action = :action) AND " +
-           "(:actorEmail IS NULL OR :actorEmail = '' OR LOWER(a.actorEmail) LIKE LOWER(CONCAT('%', :actorEmail, '%'))) " +
-           "ORDER BY a.createdAt DESC")
-    Page<AuditLog> findByActionAndActorEmail(
-            @org.springframework.data.repository.query.Param("action") String action,
-            @org.springframework.data.repository.query.Param("actorEmail") String actorEmail,
-            Pageable pageable
-    );
+    Page<AuditLog> findByActionOrderByCreatedAtDesc(String action, Pageable pageable);
+
+    Page<AuditLog> findByActorEmailContainingIgnoreCaseOrderByCreatedAtDesc(String actorEmail, Pageable pageable);
+
+    Page<AuditLog> findByActionAndActorEmailContainingIgnoreCaseOrderByCreatedAtDesc(String action, String actorEmail, Pageable pageable);
 
     /**
      * Verifies if an audit log already exists for an entity and action.

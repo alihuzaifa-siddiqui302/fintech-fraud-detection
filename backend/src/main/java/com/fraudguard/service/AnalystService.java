@@ -124,7 +124,19 @@ public class AnalystService {
     @Transactional(readOnly = true)
     public PagedResponse<AnalystTransactionDto> getTransactions(String status, int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Transaction> txnPage = transactionRepository.findByStatusAndSearch(status, search, pageable);
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        boolean hasStatus = status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim());
+
+        Page<Transaction> txnPage;
+        if (hasSearch && hasStatus) {
+            txnPage = transactionRepository.findByStatusAndSearch(status.trim(), search.trim(), pageable);
+        } else if (hasSearch) {
+            txnPage = transactionRepository.findBySearch(search.trim(), pageable);
+        } else if (hasStatus) {
+            txnPage = transactionRepository.findByStatusOrderByCreatedAtDesc(status.trim(), pageable);
+        } else {
+            txnPage = transactionRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
 
         Page<AnalystTransactionDto> dtoPage = txnPage.map(txn -> {
             List<TransactionRuleHit> ruleHits = transactionRuleHitRepository.findByTransactionId(txn.getId());
@@ -393,7 +405,20 @@ public class AnalystService {
     @Transactional(readOnly = true)
     public PagedResponse<AuditLogDto> getAuditLogs(int page, int size, String action, String actorEmail) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<AuditLog> logPage = auditLogRepository.findByActionAndActorEmail(action, actorEmail, pageable);
+        boolean hasAction = action != null && !action.trim().isEmpty() && !"ALL".equalsIgnoreCase(action.trim());
+        boolean hasActor = actorEmail != null && !actorEmail.trim().isEmpty();
+
+        Page<AuditLog> logPage;
+        if (hasAction && hasActor) {
+            logPage = auditLogRepository.findByActionAndActorEmailContainingIgnoreCaseOrderByCreatedAtDesc(action.trim(), actorEmail.trim(), pageable);
+        } else if (hasAction) {
+            logPage = auditLogRepository.findByActionOrderByCreatedAtDesc(action.trim(), pageable);
+        } else if (hasActor) {
+            logPage = auditLogRepository.findByActorEmailContainingIgnoreCaseOrderByCreatedAtDesc(actorEmail.trim(), pageable);
+        } else {
+            logPage = auditLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+
         Page<AuditLogDto> dtoPage = logPage.map(mapperService::toAuditLogDto);
         return PagedResponse.from(dtoPage);
     }
