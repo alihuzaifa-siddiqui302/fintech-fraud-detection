@@ -27,7 +27,7 @@ All sensitive credentials and connection strings are parameterized via environme
 | :--- | :---: | :--- | :--- |
 | `SPRING_PROFILES_ACTIVE` | Both | `dev` or `prod` | Set `dev` for local Docker, `prod` for cloud |
 | `DATABASE_URL` | Prod | `postgresql://user:pass@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require` | [Neon Console](https://console.neon.tech) → Dashboard |
-| `DB_PASSWORD` | Local | e.g. `postgres` or `Siddiqui@407` | Local PostgreSQL password |
+| `DB_PASSWORD` | Local | e.g. `postgres` or `your_secure_password` | Local PostgreSQL password |
 | `REDIS_URL` | Prod | `rediss://default:token@xyz.upstash.io:6379` | [Upstash Console](https://console.upstash.com) → Redis → Details |
 | `KAFKA_BOOTSTRAP_SERVERS`| Prod | `xyz.upstash.io:9092` | [Upstash Console](https://console.upstash.com) → Kafka → Endpoints |
 | `KAFKA_KEY` | Prod | `YWx...` (username) | Upstash Kafka credentials tab |
