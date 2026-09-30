@@ -417,15 +417,21 @@ export const Checkout = () => {
                   <ShieldAlert className="w-8 h-8" />
                 </div>
               )}
+              {result.status === 'OTP_REQUIRED' && (
+                <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40">
+                  <Lock className="w-8 h-8" />
+                </div>
+              )}
 
               <div>
                 <h3 className="text-xl font-bold text-white">
                   {result.status === 'APPROVED' && 'Transaction Approved'}
                   {result.status === 'PENDING_REVIEW' && 'Held for Review'}
                   {result.status === 'BLOCKED' && 'Transaction Declined'}
+                  {result.status === 'OTP_REQUIRED' && '3D Secure Verification Required'}
                 </h3>
                 <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  Txn ID: {result.transactionId}
+                  Txn ID: {result.transactionId || result.otpTransactionId}
                 </p>
               </div>
             </div>
@@ -446,6 +452,20 @@ export const Checkout = () => {
               ? 'Your transaction is under compliance review. Funds are temporarily on hold.'
               : result.statusMessage}
           </p>
+
+          {/* Action button if OTP_REQUIRED */}
+          {result.status === 'OTP_REQUIRED' && (
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/30 active:scale-95"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Enter 6-Digit Verification Code</span>
+              </button>
+            </div>
+          )}
 
           {/* Triggered Rules Breakdown */}
           {result.triggeredRules && result.triggeredRules.length > 0 ? (
