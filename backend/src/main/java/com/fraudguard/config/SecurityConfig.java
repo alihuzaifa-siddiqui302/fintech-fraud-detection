@@ -72,7 +72,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authCustomizer -> authCustomizer
                         // Public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // Role-based authorization rules
                         .requestMatchers(HttpMethod.POST, "/api/v1/checkout/**").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/v1/customer/**").hasAuthority("ROLE_CUSTOMER")
