@@ -94,6 +94,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-random-256-bit-secret-key-32-chars!}
       IPQS_API_KEY: ${IPQS_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
       CORS_ORIGINS: http://localhost:5173
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]

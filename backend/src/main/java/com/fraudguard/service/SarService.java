@@ -63,14 +63,16 @@ public class SarService {
         List<TransactionRuleHit> ruleHits = transactionRuleHitRepository.findByTransactionId(transactionId);
         String prompt = sarPromptBuilder.buildPrompt(txn, ruleHits, customer, analyst);
 
-        log.info("Dispatching SAR generation request to Gemini 2.0 Flash for txn [{}]", transactionId);
+        String modelName = geminiApiClient.getModel();
+        log.info("Dispatching SAR generation request to [{}] for txn [{}]", modelName, transactionId);
         GeminiApiClient.GeminiGenerationResult result = geminiApiClient.generate(prompt);
+        String modelUsed = result.modelUsed();
 
         SarReport sarReport = SarReport.builder()
                 .transactionId(transactionId)
                 .generatedBy(analyst.getId())
                 .reportText(result.text())
-                .modelUsed("gemini-2.0-flash")
+                .modelUsed(modelUsed)
                 .promptTokenCount(result.promptTokens())
                 .outputTokenCount(result.outputTokens())
                 .generationMs(result.generationMs())
@@ -80,7 +82,7 @@ public class SarService {
         SarReport saved = sarReportRepository.save(sarReport);
 
         Map<String, Object> afterMeta = Map.of(
-                "model", "gemini-2.0-flash",
+                "model", modelUsed,
                 "tokens", result.outputTokens(),
                 "generationMs", result.generationMs()
         );
