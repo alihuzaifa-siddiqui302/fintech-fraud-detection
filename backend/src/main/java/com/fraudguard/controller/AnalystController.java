@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -268,7 +269,7 @@ public class AnalystController {
      * @param httpRequest HTTP servlet request
      * @return ResponseEntity containing updated SarReportDto
      */
-    @PatchMapping("/sar/{sarId}/status")
+    @RequestMapping(value = "/sar/{sarId}/status", method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<SarReportDto> updateSarStatus(
             @PathVariable String sarId,
             @Valid @RequestBody SarStatusUpdateRequest request,
