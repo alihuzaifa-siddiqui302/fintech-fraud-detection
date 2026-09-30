@@ -13,11 +13,12 @@ import {
   DollarSign,
   AlertTriangle,
 } from 'lucide-react';
-import { submitCheckout } from '../../api/api';
+import { submitCheckout, getOtpStatus } from '../../api/api';
 import { useSessionSignals } from '../../hooks/useSessionSignals';
 import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { useToast } from '../../context/ToastContext';
 import RiskScorePill from '../../components/RiskScorePill';
+import OtpVerificationModal from '../../components/OtpVerificationModal';
 import clsx from 'clsx';
 
 export const Checkout = () => {
@@ -36,6 +37,10 @@ export const Checkout = () => {
   // Velocity attack state
   const [velocityInProgress, setVelocityInProgress] = useState(false);
   const [velocityProgress, setVelocityProgress] = useState(0);
+
+  // 3DS OTP Step-Up Modal state
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpData, setOtpData] = useState(null);
 
   const { getSignals } = useSessionSignals();
   const { fingerprint } = useDeviceFingerprint();
@@ -86,6 +91,27 @@ export const Checkout = () => {
 
       if (response.status === 'APPROVED') {
         toast.success(`Transaction approved with score ${response.riskScore}`, 'Checkout Approved');
+      } else if (response.status === 'OTP_REQUIRED') {
+        toast.info(
+          "Security verification required. A 6-digit code has been dispatched to your email.",
+          "3D Secure Step-Up"
+        );
+        const txnId = response.otpTransactionId || response.transactionId;
+        try {
+          const statusResp = await getOtpStatus(txnId);
+          setOtpData({
+            transactionId: txnId,
+            maskedEmail: statusResp.maskedEmail,
+            expiresAt: statusResp.expiresAt,
+          });
+        } catch {
+          setOtpData({
+            transactionId: txnId,
+            maskedEmail: 'your registered email',
+            expiresAt: null,
+          });
+        }
+        setShowOtpModal(true);
       } else if (response.status === 'PENDING_REVIEW') {
         toast.warning('Transaction flagged for compliance investigation', 'Hold for Review');
       } else {
@@ -97,6 +123,28 @@ export const Checkout = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOtpSuccess = (verificationResult) => {
+    setShowOtpModal(false);
+    setResult((prev) => ({
+      ...prev,
+      status: 'APPROVED',
+      statusColor: 'green',
+      statusMessage: 'Transaction approved after 3DS identity verification.',
+    }));
+    toast.success('3D Secure verification passed! Payment approved.', 'Verification Success');
+  };
+
+  const handleOtpBlocked = (reason) => {
+    setShowOtpModal(false);
+    setResult((prev) => ({
+      ...prev,
+      status: 'BLOCKED',
+      statusColor: 'red',
+      statusMessage: reason || 'Transaction declined due to failed 3D Secure verification.',
+    }));
+    toast.error(reason || 'Verification failed. Transaction declined.', 'Payment Declined');
   };
 
   const handleVelocityAttack = async () => {
@@ -437,6 +485,18 @@ export const Checkout = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* 3D Secure (3DS) OTP Step-Up Modal */}
+      {showOtpModal && otpData && (
+        <OtpVerificationModal
+          transactionId={otpData.transactionId}
+          maskedEmail={otpData.maskedEmail}
+          expiresAt={otpData.expiresAt}
+          onSuccess={handleOtpSuccess}
+          onBlocked={handleOtpBlocked}
+          onClose={() => setShowOtpModal(false)}
+        />
       )}
     </div>
   );

@@ -110,6 +110,12 @@ public class Transaction {
     @Column(name = "resolution_notes", columnDefinition = "text")
     private String resolutionNotes;
 
+    @Column(name = "otp_required")
+    private Boolean otpRequired;
+
+    @Column(name = "otp_status", length = 30)
+    private String otpStatus;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

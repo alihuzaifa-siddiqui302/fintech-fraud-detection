@@ -62,6 +62,10 @@ public class CheckoutService {
     private final MapperService mapperService;
     private final ObjectMapper objectMapper;
     private final FraudGuardEventProducer eventProducer;
+    private final OtpService otpService;
+
+    @org.springframework.beans.factory.annotation.Value("${fraudguard.otp.enabled:true}")
+    private boolean otpEnabled;
 
     /**
      * Evaluates and records a financial checkout transaction end-to-end.
@@ -202,6 +206,25 @@ public class CheckoutService {
                 .toList();
 
         OffsetDateTime timestamp = savedTxn.getCreatedAt() != null ? savedTxn.getCreatedAt() : OffsetDateTime.now();
+
+        // 13. If PENDING_REVIEW and 3DS OTP step-up is enabled, trigger challenge and prompt customer
+        if (AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(savedTxn.getStatus()) && otpEnabled) {
+            log.info("Transaction [{}] scored PENDING_REVIEW ({}/100). Triggering 3DS OTP step-up challenge.",
+                    savedTxn.getId(), evalResult.getTotalScore());
+            otpService.issueChallenge(savedTxn.getId(), user.getEmail());
+
+            return new CheckoutResponse(
+                    savedTxn.getId(),
+                    "OTP_REQUIRED",
+                    evalResult.getTotalScore(),
+                    "blue",
+                    "Verification required. We've sent a 6-digit code to your email.",
+                    ruleHitDtos,
+                    evalResult.getAllResults().size(),
+                    timestamp,
+                    savedTxn.getId()
+            );
+        }
 
         return new CheckoutResponse(
                 savedTxn.getId(),

@@ -24,5 +24,19 @@ public record CheckoutResponse(
     String statusMessage,
     List<RuleHitDto> triggeredRules,
     int totalRulesEvaluated,
-    OffsetDateTime timestamp
-) {}
+    OffsetDateTime timestamp,
+    String otpTransactionId
+) {
+    public CheckoutResponse(
+        String transactionId,
+        String status,
+        int riskScore,
+        String statusColor,
+        String statusMessage,
+        List<RuleHitDto> triggeredRules,
+        int totalRulesEvaluated,
+        OffsetDateTime timestamp
+    ) {
+        this(transactionId, status, riskScore, statusColor, statusMessage, triggeredRules, totalRulesEvaluated, timestamp, null);
+    }
+}

@@ -1,5 +1,22 @@
 // frontend/src/api/axiosClient.js
-import { apiClient, generateSar, getSarReports, updateSarStatus } from './api';
+import {
+  apiClient,
+  generateSar,
+  getSarReports,
+  updateSarStatus,
+  issueOtpChallenge,
+  verifyOtp,
+  getOtpStatus,
+} from './api';
 
 export default apiClient;
-export { apiClient, generateSar, getSarReports, updateSarStatus };
+export {
+  apiClient,
+  generateSar,
+  getSarReports,
+  updateSarStatus,
+  issueOtpChallenge,
+  verifyOtp,
+  getOtpStatus,
+};
+

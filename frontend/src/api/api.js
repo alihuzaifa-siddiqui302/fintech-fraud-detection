@@ -157,3 +157,20 @@ export const updateSarStatus = async (sarId, status, notes) => {
   return response.data;
 };
 
+// 3D Secure (3DS) OTP Step-Up Authentication
+export const issueOtpChallenge = async (transactionId) => {
+  const response = await apiClient.post('/api/v1/customer/otp/issue', { transactionId });
+  return response.data;
+};
+
+export const verifyOtp = async (transactionId, otp) => {
+  const response = await apiClient.post('/api/v1/customer/otp/verify', { transactionId, otp });
+  return response.data;
+};
+
+export const getOtpStatus = async (transactionId) => {
+  const response = await apiClient.get(`/api/v1/customer/otp/status/${transactionId}`);
+  return response.data;
+};
+
+

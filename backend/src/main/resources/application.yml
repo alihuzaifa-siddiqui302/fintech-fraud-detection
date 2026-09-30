@@ -51,6 +51,20 @@ spring:
     baseline-on-migrate: true # Safely initializes migration baseline if DB pre-exists
 
   # ----------------------------------------------------------------------------
+  # JavaMailSender Configuration (3DS OTP Step-Up)
+  # ----------------------------------------------------------------------------
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+
+  # ----------------------------------------------------------------------------
   # Redis 7 Cache & Sliding Window State
   # ----------------------------------------------------------------------------
   data:
@@ -111,6 +125,12 @@ fraudguard:
       max-output-tokens: 2048
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  otp:
+    enabled: ${OTP_ENABLED:true}
+    expiry-minutes: 5
+    max-attempts: 3
+    length: 6
+    subject: "FraudGuard Security Verification"
   velocity:
     window-minutes: 5 # Rolling time window for rapid burst transaction evaluation
     user-limit: 3     # Maximum normal transactions per user per window before penalty
@@ -127,6 +147,9 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    mail:
+      enabled: false
 
 # ------------------------------------------------------------------------------
 # Logging Hierarchy

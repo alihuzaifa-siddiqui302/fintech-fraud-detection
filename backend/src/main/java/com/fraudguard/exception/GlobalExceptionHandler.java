@@ -96,6 +96,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
     }
 
+    @ExceptionHandler(OtpDeliveryException.class)
+    public ResponseEntity<ErrorResponse> handleOtpDeliveryException(
+            OtpDeliveryException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("OTP Delivery Error: {} on path: {}", exception.getMessage(), request.getRequestURI());
+        ErrorResponse errorResponse = new ErrorResponse(
+                "OTP_DELIVERY_FAILED",
+                exception.getMessage(),
+                HttpStatus.BAD_GATEWAY.value(),
+                Instant.now(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
+    }
+
     /**
      * Handles unauthorized access violations (403 FORBIDDEN).
      *
