@@ -20,4 +20,6 @@ public class SarStatusUpdateRequest {
     private String status;
 
     private String notes;
+
+    private String reportText;
 }

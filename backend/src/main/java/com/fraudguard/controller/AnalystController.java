@@ -287,7 +287,7 @@ public class AnalystController {
         String clientIp = ipExtractor.extractClientIp(httpRequest);
 
         log.info("Analyst [{}] updating status of SAR [{}] to [{}]", analystEmail, sarId, request.getStatus());
-        SarReportDto updated = sarService.updateSarStatus(sarId, request.getStatus(), request.getNotes(), analystEmail, clientIp);
+        SarReportDto updated = sarService.updateSarStatus(sarId, request.getStatus(), request.getNotes(), request.getReportText(), analystEmail, clientIp);
         return ResponseEntity.ok(updated);
     }
 

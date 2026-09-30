@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   Cpu,
   Clock,
+  Edit3,
+  Save,
+  X,
 } from 'lucide-react';
 import { generateSar, getSarReports, updateSarStatus } from '../api/api';
 import { useToast } from '../context/ToastContext';
@@ -40,10 +43,21 @@ export const SarPanel = ({ transactionId, transactionStatus }) => {
   const [copied, setCopied] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const toast = useToast();
   const stageTimerRef = useRef(null);
   const progressTimerRef = useRef(null);
+
+  // Sync editedText whenever activeReport changes
+  useEffect(() => {
+    if (activeReport?.reportText) {
+      setEditedText(activeReport.reportText);
+    }
+    setIsEditing(false);
+  }, [activeReport?.id]);
 
   // Load existing SAR reports when transactionId changes or panel is expanded
   useEffect(() => {
@@ -126,12 +140,31 @@ export const SarPanel = ({ transactionId, transactionStatus }) => {
     }
   };
 
+  const handleSaveDraftText = async () => {
+    if (!activeReport) return;
+    setSavingEdit(true);
+    try {
+      const updated = await updateSarStatus(activeReport.id, 'DRAFT', '', editedText);
+      setActiveReport(updated);
+      setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      setIsEditing(false);
+      toast?.success?.('Draft narrative saved with analyst revisions (Human-in-the-Loop)');
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save revisions';
+      toast?.error?.(msg);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const handleUpdateStatus = async (nextStatus) => {
     if (!activeReport) return;
     setUpdatingStatus(true);
     try {
-      const updated = await updateSarStatus(activeReport.id, nextStatus, '');
+      const textToSave = isEditing ? editedText : null;
+      const updated = await updateSarStatus(activeReport.id, nextStatus, '', textToSave);
       setActiveReport(updated);
+      setIsEditing(false);
       setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
       toast?.success?.(`SAR status updated to ${nextStatus}`);
     } catch (err) {
@@ -343,25 +376,64 @@ export const SarPanel = ({ transactionId, transactionStatus }) => {
                 <div className="flex items-center gap-2">
                   {activeReport.status === 'DRAFT' && (
                     <>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-700 text-slate-200">
-                        DRAFT
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-amber-300 border border-amber-800/60 flex items-center gap-1.5 shadow-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        STATUS: DRAFT
                       </span>
-                      <button
-                        type="button"
-                        disabled={updatingStatus}
-                        onClick={() => handleUpdateStatus('FINAL')}
-                        className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
-                      >
-                        {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                        <span>Mark as Final</span>
-                      </button>
+
+                      {!isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditing(true)}
+                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors border border-slate-700 flex items-center gap-1.5 hover:text-white"
+                            title="Edit report text (Human-in-the-Loop review)"
+                          >
+                            <Edit3 className="w-3 h-3 text-indigo-400" />
+                            <span>Edit Draft</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={updatingStatus}
+                            onClick={() => handleUpdateStatus('FINAL')}
+                            className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            <span>Mark as Final</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            disabled={savingEdit}
+                            onClick={handleSaveDraftText}
+                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm shadow-emerald-950"
+                          >
+                            {savingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                            <span>Save Draft</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditedText(activeReport.reportText || '');
+                              setIsEditing(false);
+                            }}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Cancel</span>
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
 
                   {activeReport.status === 'FINAL' && (
                     <>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-950 border border-blue-800 text-blue-300">
-                        FINAL
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-950 border border-blue-800 text-blue-300 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                        STATUS: FINAL
                       </span>
                       <button
                         type="button"
@@ -376,9 +448,9 @@ export const SarPanel = ({ transactionId, transactionStatus }) => {
                   )}
 
                   {activeReport.status === 'FILED' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 border border-emerald-800 text-emerald-300 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 border border-emerald-800 text-emerald-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      Filed {formatRelativeTime(activeReport.filedAt || activeReport.updatedAt)}
+                      FILED {formatRelativeTime(activeReport.filedAt || activeReport.updatedAt)}
                     </span>
                   )}
                 </div>
@@ -399,11 +471,32 @@ export const SarPanel = ({ transactionId, transactionStatus }) => {
                 )}
               </div>
 
-              {/* Narrative Text Box */}
+              {/* Narrative Text Box or Editable Textarea */}
               <div className="relative group">
-                <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 max-h-[300px] overflow-y-auto font-mono text-[11.5px] leading-relaxed text-slate-200 select-text whitespace-pre-wrap selection:bg-indigo-900 selection:text-white scrollbar-thin scrollbar-thumb-slate-700">
-                  {activeReport.reportText}
-                </div>
+                {isEditing ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-indigo-300 px-1 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                        Analyst Revision Mode (Human-in-the-Loop)
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {editedText.length} characters
+                      </span>
+                    </div>
+                    <textarea
+                      value={editedText}
+                      onChange={(e) => setEditedText(e.target.value)}
+                      rows={14}
+                      className="w-full p-3.5 rounded-lg bg-slate-950 border-2 border-indigo-600/80 font-mono text-[11.5px] leading-relaxed text-slate-100 focus:outline-none focus:border-indigo-400 resize-y select-text scrollbar-thin scrollbar-thumb-slate-700 shadow-inner"
+                      placeholder="Modify or add notes to the regulatory SAR narrative..."
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 max-h-[300px] overflow-y-auto font-mono text-[11.5px] leading-relaxed text-slate-200 select-text whitespace-pre-wrap selection:bg-indigo-900 selection:text-white scrollbar-thin scrollbar-thumb-slate-700">
+                    {activeReport.reportText}
+                  </div>
+                )}
               </div>
 
               {/* Action Toolbar */}

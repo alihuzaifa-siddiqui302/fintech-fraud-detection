@@ -115,14 +115,14 @@ public class SarService {
      * @param analystIp actioning analyst IP address
      * @return updated SarReportDto
      */
-    public SarReportDto updateSarStatus(String sarId, String newStatus, String notes, String analystEmail, String analystIp) {
+    public SarReportDto updateSarStatus(String sarId, String newStatus, String notes, String reportText, String analystEmail, String analystIp) {
         SarReport sarReport = sarReportRepository.findById(sarId)
                 .orElseThrow(() -> new ResourceNotFoundException("SAR Report not found: " + sarId));
 
         String currentStatus = sarReport.getStatus();
-        String requestedStatus = newStatus != null ? newStatus.toUpperCase().trim() : "";
+        String requestedStatus = (newStatus != null && !newStatus.isBlank()) ? newStatus.toUpperCase().trim() : currentStatus;
 
-        boolean isValidTransition = ("DRAFT".equals(currentStatus) && "FINAL".equals(requestedStatus))
+        boolean isValidTransition = ("DRAFT".equals(currentStatus) && ("DRAFT".equals(requestedStatus) || "FINAL".equals(requestedStatus)))
                 || ("FINAL".equals(currentStatus) && "FILED".equals(requestedStatus));
 
         if (!isValidTransition) {
@@ -139,6 +139,10 @@ public class SarService {
 
         if (notes != null && !notes.isBlank()) {
             sarReport.setNotes(notes.trim());
+        }
+
+        if (reportText != null && !reportText.isBlank()) {
+            sarReport.setReportText(reportText.trim());
         }
 
         sarReport.setStatus(requestedStatus);

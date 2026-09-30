@@ -152,8 +152,12 @@ export const getSarReports = async (transactionId) => {
   return response.data;
 };
 
-export const updateSarStatus = async (sarId, status, notes) => {
-  const response = await apiClient.patch(`/api/v1/analyst/sar/${sarId}/status`, { status, notes });
+export const updateSarStatus = async (sarId, status, notes = '', reportText = null) => {
+  const payload = { status, notes };
+  if (reportText !== null && reportText !== undefined) {
+    payload.reportText = reportText;
+  }
+  const response = await apiClient.patch(`/api/v1/analyst/sar/${sarId}/status`, payload);
   return response.data;
 };
 
