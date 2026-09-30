@@ -21,6 +21,9 @@ public class FraudGuardEventProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
+    @org.springframework.beans.factory.annotation.Value("${fraudguard.kafka.enabled:true}")
+    private boolean kafkaEnabled;
+
     /**
      * Publishes an evaluated transaction event to the raw transactions topic asynchronously.
      *
@@ -29,6 +32,12 @@ public class FraudGuardEventProducer {
     public void publishTransaction(TransactionKafkaEvent event) {
         if (event == null || event.transactionId() == null) {
             log.warn("Cannot publish null transaction event to Kafka");
+            return;
+        }
+
+        if (!kafkaEnabled) {
+            log.debug("Kafka publishing disabled (fraudguard.kafka.enabled=false). Skipping event dispatch for txn: {}",
+                    event.transactionId());
             return;
         }
 
@@ -58,6 +67,10 @@ public class FraudGuardEventProducer {
     public void publishAuditEvent(AuditKafkaEvent event) {
         if (event == null || event.entityId() == null) {
             log.warn("Cannot publish null audit event to Kafka");
+            return;
+        }
+
+        if (!kafkaEnabled) {
             return;
         }
 

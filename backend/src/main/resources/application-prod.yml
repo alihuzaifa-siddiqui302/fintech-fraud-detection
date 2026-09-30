@@ -116,6 +116,8 @@ fraudguard:
     enabled: ${OTP_ENABLED:true}
     expiry-minutes: 5
     max-attempts: 3
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
 
 # ------------------------------------------------------------------------------
 # Production Logging — minimal output, no SQL tracing

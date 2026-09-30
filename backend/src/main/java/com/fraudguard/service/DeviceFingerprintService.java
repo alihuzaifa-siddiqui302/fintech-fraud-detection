@@ -38,16 +38,28 @@ public class DeviceFingerprintService {
                 deviceFingerprintRepository.findByUserIdAndFingerprintHash(userId, sanitizedHash);
 
         if (existingOpt.isEmpty()) {
-            DeviceFingerprint newBinding = DeviceFingerprint.builder()
-                    .userId(userId)
-                    .fingerprintHash(sanitizedHash)
-                    .txnCount(1)
-                    .firstSeen(OffsetDateTime.now())
-                    .lastSeen(OffsetDateTime.now())
-                    .build();
-            deviceFingerprintRepository.save(newBinding);
-            log.info("New device fingerprint detected for user {}: {}", userId, sanitizedHash);
-            return true;
+            try {
+                DeviceFingerprint newBinding = DeviceFingerprint.builder()
+                        .userId(userId)
+                        .fingerprintHash(sanitizedHash)
+                        .txnCount(1)
+                        .firstSeen(OffsetDateTime.now())
+                        .lastSeen(OffsetDateTime.now())
+                        .build();
+                deviceFingerprintRepository.saveAndFlush(newBinding);
+                log.info("New device fingerprint detected for user {}: {}", userId, sanitizedHash);
+                return true;
+            } catch (Exception ex) {
+                log.warn("Device fingerprint already registered concurrently for user {}: {}. Updating existing.",
+                        userId, ex.getMessage());
+                deviceFingerprintRepository.findByUserIdAndFingerprintHash(userId, sanitizedHash)
+                        .ifPresent(existing -> {
+                            existing.setTxnCount(existing.getTxnCount() + 1);
+                            existing.setLastSeen(OffsetDateTime.now());
+                            deviceFingerprintRepository.save(existing);
+                        });
+                return false;
+            }
         }
 
         DeviceFingerprint existing = existingOpt.get();
