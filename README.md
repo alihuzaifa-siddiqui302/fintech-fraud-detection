@@ -163,8 +163,10 @@ The database is pre-seeded with two specialized roles:
 
 | Role | Email | Password | Primary Features Accessible |
 | :--- | :--- | :--- | :--- |
-| **Customer** | `customer@fraudguard.io` | `Customer123!` | Checkout simulator, sandbox QA toggles (VPN, Foreign IP, Bot), step-up OTP challenge, personal transaction ledger |
-| **Analyst** | `analyst@fraudguard.io` | `Analyst123!` | Live transaction triage, forensic drawer, rule tuning, blacklists, Syndicate Link Graph, AI SAR drafting |
+| **Customer** | `customer@fraudguard.io` | `demo1234` | Checkout simulator, sandbox QA toggles (VPN, Foreign IP, Bot), step-up OTP challenge, personal transaction ledger |
+| **Analyst** | `analyst@fraudguard.io` | `demo1234` | Live transaction triage, forensic drawer, rule tuning, blacklists, Syndicate Link Graph, AI SAR drafting |
+
+*(Tip: You can also simply click the **"Customer Portal"** or **"Analyst Cockpit"** quick access buttons on the login screen for instant 1-click access!)*
 
 ---
 
