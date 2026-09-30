@@ -423,15 +423,18 @@ public class GraphDataService {
         Pageable pageable = PageRequest.of(0, Math.min(maxNodes, 100));
 
         if (params.getSeedUserId() != null && !params.getSeedUserId().isBlank()) {
-            return transactionRepository.findSeedTransactionsByUser(params.getSeedUserId().trim(), fromTimestamp, pageable);
+            String cleanUserId = params.getSeedUserId().trim().replaceFirst("(?i)^user_", "");
+            return transactionRepository.findSeedTransactionsByUser(cleanUserId, fromTimestamp, pageable);
         }
 
         if (params.getSeedIpAddress() != null && !params.getSeedIpAddress().isBlank()) {
-            return transactionRepository.findSeedTransactionsByIp(params.getSeedIpAddress().trim(), fromTimestamp, pageable);
+            String cleanIp = params.getSeedIpAddress().trim().replaceFirst("(?i)^ip_", "");
+            return transactionRepository.findSeedTransactionsByIp(cleanIp, fromTimestamp, pageable);
         }
 
         if (params.getSeedFingerprint() != null && !params.getSeedFingerprint().isBlank()) {
-            return transactionRepository.findSeedTransactionsByFingerprint(params.getSeedFingerprint().trim(), fromTimestamp, pageable);
+            String cleanFp = params.getSeedFingerprint().trim().replaceFirst("(?i)^(device_|dev_)", "");
+            return transactionRepository.findSeedTransactionsByFingerprint(cleanFp, fromTimestamp, pageable);
         }
 
         // Default: last 24h/fromTimestamp suspicious transactions score >= 50

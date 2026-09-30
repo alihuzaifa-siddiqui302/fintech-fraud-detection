@@ -314,11 +314,13 @@ export const FraudGraph = () => {
 
     // Double-tap on USER node: expand graph with depth=2
     cy.on('dbltap', 'node[type = "USER"]', (evt) => {
-      const uId = evt.target.data('id');
-      setSeedUserId(uId);
+      const rawId = evt.target.data('id') || '';
+      const cleanUserId = rawId.replace(/^user_/, '');
+      const userLabel = evt.target.data('label') || cleanUserId;
+      setSeedUserId(cleanUserId);
       setDepth(2);
-      toast.info(`Expanding network graph for user ${uId} (2 hops)...`);
-      fetchGraphData({ seedUserId: uId, depth: 2 });
+      toast.info(`Expanding network graph for ${userLabel} (2 hops)...`);
+      fetchGraphData({ seedUserId: cleanUserId, depth: 2 });
     });
 
     // Unselect node when canvas background clicked
@@ -800,7 +802,10 @@ export const FraudGraph = () => {
                   {/* Actions */}
                   <div className="pt-2 space-y-2">
                     <button
-                      onClick={() => navigate(`/admin?search=${encodeURIComponent(selectedNode.id)}`)}
+                      onClick={() => {
+                        const searchTerm = selectedNode.data?.email || selectedNode.id.replace(/^user_/, '');
+                        navigate(`/admin?search=${encodeURIComponent(searchTerm)}`);
+                      }}
                       className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
