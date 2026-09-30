@@ -75,3 +75,5 @@ management:
   health:
     mail:
       enabled: false
+    kafka:
+      enabled: false
