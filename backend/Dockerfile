@@ -28,10 +28,10 @@ COPY --from=builder /build/target/*.jar app.jar
 RUN chown fraudguard:fraudguard app.jar
 
 USER fraudguard
-EXPOSE 8080
+EXPOSE 8080 10000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080/actuator/health || exit 1
+  CMD wget -qO- http://localhost:${PORT:-8080}/actuator/health || exit 1
 
 # Production JVM flags — tuned for 512 MB RAM free-tier containers
 # -Xmx384m     : hard heap ceiling (leaves ~128 MB for OS + Metaspace)
