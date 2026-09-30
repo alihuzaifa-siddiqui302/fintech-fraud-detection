@@ -18,7 +18,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/fraudguard_db?stringtype=unspecified
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD:Siddiqui@407}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10 # Limits concurrent connections to avoid saturating Postgres
@@ -83,6 +83,8 @@ spring:
   # ----------------------------------------------------------------------------
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    admin:
+      fail-fast: false          # Don't crash on startup if Kafka broker is unavailable
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
