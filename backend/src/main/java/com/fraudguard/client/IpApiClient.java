@@ -76,7 +76,7 @@ public class IpApiClient {
         }
 
         // 2. Outbound HTTP Request
-        String url = String.format("%s/%s?fields=status,country,countryCode,city,isp,org,proxy,hosting,query",
+        String url = String.format("%s/%s?fields=status,country,countryCode,city,isp,org,proxy,hosting,query,timezone",
                 baseUrl, sanitizedIp);
 
         try {

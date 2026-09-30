@@ -351,11 +351,8 @@ public class FraudRiskEngine {
         // RULE 17: TIMEZONE_MISMATCH
         // ---------------------------------------------------------------------
         FraudRule timezoneRule = activeRules.get(RuleCode.TIMEZONE_MISMATCH);
-        boolean timezoneMismatch = Boolean.TRUE.equals(ctx.getTimezoneOffsetMinutes() != null && ctx.getTimezoneOffsetMinutes() != 0)
-                || (ctx.getBrowserTimezone() != null && ctx.getIpCity() != null && !ctx.getBrowserTimezone().isBlank()
-                    && Boolean.TRUE.equals(ctx.getIsHeadless())); // Defensive timezone discrepancy check
-        // Or if explicitly signaled on context
-        boolean finalTzMismatch = Boolean.TRUE.equals(ctx.getSimulateForeignIp()) || timezoneMismatch;
+        boolean finalTzMismatch = Boolean.TRUE.equals(ctx.getTimezoneMismatch())
+                || Boolean.TRUE.equals(ctx.getSimulateForeignIp());
         results.add(buildResult(
                 timezoneRule,
                 RuleCode.TIMEZONE_MISMATCH,
