@@ -6,6 +6,7 @@ import com.fraudguard.constant.AppConstants;
 import com.fraudguard.dto.request.CheckoutRequest;
 import com.fraudguard.dto.response.AnalystTransactionDto;
 import com.fraudguard.dto.response.CheckoutResponse;
+import com.fraudguard.dto.response.OtpChallengeDto;
 import com.fraudguard.dto.response.RuleHitDto;
 import com.fraudguard.engine.FraudRiskEngine;
 import com.fraudguard.engine.model.EnrichedTransactionContext;
@@ -178,10 +179,23 @@ public class CheckoutService {
         // 10. Asynchronously publish transaction evaluation event to Kafka
         publishKafkaEvent(savedTxn, evalResult);
 
-        // 11. If flagged for PENDING_REVIEW, push directly to live analyst SSE streams
-        if (AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(savedTxn.getStatus())) {
+        // 11. Risk-band split for PENDING_REVIEW:
+        //   Score 30–50 → OTP step-up only (customer self-serves; no analyst involvement)
+        //   Score 51–69 → OTP step-up AND analyst queue (high-risk; human oversight required)
+        final int score = evalResult.getTotalScore();
+        final boolean isPending = AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(savedTxn.getStatus());
+        final boolean isHighRiskPending = isPending && score > AppConstants.DecisionThreshold.OTP_ONLY_MAX;
+
+        if (isHighRiskPending) {
+            // Score 51-69: broadcast to analyst queue for human oversight
+            log.info("Transaction [{}] score={} — HIGH-RISK PENDING (>{}). Notifying analyst queue.",
+                    savedTxn.getId(), score, AppConstants.DecisionThreshold.OTP_ONLY_MAX);
             AnalystTransactionDto analystDto = mapperService.toAnalystDto(savedTxn, savedHits, null, sessionSignal);
             dashboardStreamService.broadcastPendingTransaction(analystDto);
+        } else if (isPending) {
+            // Score 30-50: OTP only — no analyst needed, customer self-serves
+            log.info("Transaction [{}] score={} — LOW-RISK PENDING (≤{}). OTP step-up only, skipping analyst queue.",
+                    savedTxn.getId(), score, AppConstants.DecisionThreshold.OTP_ONLY_MAX);
         }
 
         // 12. Resolve visual status color and message
@@ -207,22 +221,27 @@ public class CheckoutService {
 
         OffsetDateTime timestamp = savedTxn.getCreatedAt() != null ? savedTxn.getCreatedAt() : OffsetDateTime.now();
 
-        // 13. If PENDING_REVIEW and 3DS OTP step-up is enabled, trigger challenge and prompt customer
-        if (AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(savedTxn.getStatus()) && otpEnabled) {
-            log.info("Transaction [{}] scored PENDING_REVIEW ({}/100). Triggering 3DS OTP step-up challenge.",
-                    savedTxn.getId(), evalResult.getTotalScore());
-            otpService.issueChallenge(savedTxn.getId(), user.getEmail());
+        // 13. If PENDING_REVIEW and 3DS OTP step-up is enabled, trigger challenge (both bands)
+        if (isPending && otpEnabled) {
+            log.info("Transaction [{}] score={} — issuing 3DS OTP challenge (band: {}).",
+                    savedTxn.getId(), score, score <= AppConstants.DecisionThreshold.OTP_ONLY_MAX ? "OTP_ONLY" : "OTP_AND_ANALYST");
+            OtpChallengeDto otpChallenge = otpService.issueChallenge(savedTxn.getId(), user.getEmail());
 
             return new CheckoutResponse(
                     savedTxn.getId(),
                     "OTP_REQUIRED",
-                    evalResult.getTotalScore(),
+                    score,
                     "blue",
-                    "Verification required. We've sent a 6-digit code to your email.",
+                    isHighRiskPending
+                        ? "Verification required. Your transaction is also under review by our security team."
+                        : "Verification required. We've sent a 6-digit code to your email.",
                     ruleHitDtos,
                     evalResult.getAllResults().size(),
                     timestamp,
-                    savedTxn.getId()
+                    savedTxn.getId(),
+                    otpChallenge.demoOtp(),
+                    otpChallenge.maskedEmail(),
+                    otpChallenge.expiresAt()
             );
         }
 

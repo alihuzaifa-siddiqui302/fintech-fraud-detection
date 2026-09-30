@@ -13,6 +13,7 @@ import AnalystCockpit from './pages/admin/AnalystCockpit';
 import AnalystDashboard from './pages/admin/AnalystDashboard';
 import RulesManager from './pages/admin/RulesManager';
 import Blacklists from './pages/admin/Blacklists';
+import FraudGraph from './pages/admin/FraudGraph';
 import AuditLog from './pages/admin/AuditLog';
 
 export const App = () => {
@@ -50,6 +51,7 @@ export const App = () => {
               <Route index element={<AnalystDashboard />} />
               <Route path="rules" element={<RulesManager />} />
               <Route path="blacklists" element={<Blacklists />} />
+              <Route path="graph" element={<FraudGraph />} />
               <Route path="audit" element={<AuditLog />} />
             </Route>
 

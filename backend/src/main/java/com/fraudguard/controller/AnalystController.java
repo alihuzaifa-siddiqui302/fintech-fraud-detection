@@ -3,18 +3,24 @@ package com.fraudguard.controller;
 
 import com.fraudguard.dto.request.AddBlacklistRequest;
 import com.fraudguard.dto.request.AdjudicateRequest;
+import com.fraudguard.dto.request.GraphQueryParams;
 import com.fraudguard.dto.request.SarStatusUpdateRequest;
 import com.fraudguard.dto.request.UpdateRuleRequest;
 import com.fraudguard.dto.response.AnalystTransactionDto;
 import com.fraudguard.dto.response.AuditLogDto;
 import com.fraudguard.dto.response.BlacklistDto;
+import com.fraudguard.dto.response.FraudGraphDto;
 import com.fraudguard.dto.response.FraudRuleDto;
 import com.fraudguard.dto.response.MetricsDto;
 import com.fraudguard.dto.response.PagedResponse;
 import com.fraudguard.dto.response.SarReportDto;
+import com.fraudguard.entity.Transaction;
+import com.fraudguard.repository.TransactionRepository;
 import com.fraudguard.service.AnalystService;
+import com.fraudguard.service.GraphDataService;
 import com.fraudguard.service.SarService;
 import com.fraudguard.util.IpExtractor;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -53,6 +59,8 @@ public class AnalystController {
     private final AnalystService analystService;
     private final SarService sarService;
     private final IpExtractor ipExtractor;
+    private final GraphDataService graphDataService;
+    private final TransactionRepository transactionRepository;
 
     /**
      * Retrieves high-level operational fraud KPIs and volume metrics aggregated over the trailing 24 hours.
@@ -281,6 +289,44 @@ public class AnalystController {
         log.info("Analyst [{}] updating status of SAR [{}] to [{}]", analystEmail, sarId, request.getStatus());
         SarReportDto updated = sarService.updateSarStatus(sarId, request.getStatus(), request.getNotes(), analystEmail, clientIp);
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Builds and retrieves the interactive fraud syndicate network graph based on seed parameters.
+     *
+     * @param params search seeds, depth limit, date range, and node threshold
+     * @return ResponseEntity containing FraudGraphDto
+     */
+    @GetMapping("/graph")
+    public ResponseEntity<FraudGraphDto> getSyndicateGraph(@Valid GraphQueryParams params) {
+        log.info("Analyst [{}] fetching fraud syndicate link graph with params [{}]",
+                getAuthenticatedEmail(), params);
+        return ResponseEntity.ok(graphDataService.buildGraph(params));
+    }
+
+    /**
+     * Retrieves the fraud syndicate network graph pre-seeded from a specific transaction's actors.
+     *
+     * @param id transaction UUID
+     * @return ResponseEntity containing FraudGraphDto
+     */
+    @GetMapping("/graph/transaction/{id}")
+    public ResponseEntity<FraudGraphDto> getTransactionGraph(@PathVariable String id) {
+        log.info("Analyst [{}] requesting transaction-seeded syndicate graph for txn [{}]",
+                getAuthenticatedEmail(), id);
+
+        Transaction txn = transactionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found with ID: " + id));
+
+        GraphQueryParams params = GraphQueryParams.builder()
+                .seedUserId(txn.getUserId())
+                .seedIpAddress(txn.getIpAddress())
+                .seedFingerprint(txn.getDeviceFingerprint())
+                .depth(1)
+                .maxNodes(80)
+                .build();
+
+        return ResponseEntity.ok(graphDataService.buildGraph(params));
     }
 
     private String getAuthenticatedEmail() {

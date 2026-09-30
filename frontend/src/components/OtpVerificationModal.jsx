@@ -21,15 +21,29 @@ export default function OtpVerificationModal({
   transactionId,
   maskedEmail: initialMaskedEmail,
   expiresAt: initialExpiresAt,
+  demoOtp,
   onSuccess,
   onBlocked,
   onClose,
 }) {
-  const [digits, setDigits] = useState(['', '', '', '', '', '']);
+  const [digits, setDigits] = useState(() => {
+    if (demoOtp && typeof demoOtp === 'string' && demoOtp.trim().length === 6) {
+      return demoOtp.trim().split('');
+    }
+    return ['', '', '', '', '', ''];
+  });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [remainingAttempts, setRemainingAttempts] = useState(3);
   const [shake, setShake] = useState(false);
+
+  // Automatically populate digits when demoOtp prop is received or changes
+  useEffect(() => {
+    if (demoOtp && typeof demoOtp === 'string' && demoOtp.trim().length === 6) {
+      setDigits(demoOtp.trim().split(''));
+      setErrorMsg(null);
+    }
+  }, [demoOtp]);
 
   // Modal terminal states: 'INPUT' | 'SUCCESS' | 'BLOCKED'
   const [modalState, setModalState] = useState('INPUT');
@@ -224,7 +238,11 @@ export default function OtpVerificationModal({
       setResendCooldown(60);
       setRemainingAttempts(res.maxAttempts || 3);
       if (res.maskedEmail) setMaskedEmail(res.maskedEmail);
-      setDigits(['', '', '', '', '', '']);
+      if (res.demoOtp && typeof res.demoOtp === 'string' && res.demoOtp.trim().length === 6) {
+        setDigits(res.demoOtp.trim().split(''));
+      } else {
+        setDigits(['', '', '', '', '', '']);
+      }
       if (inputRefs.current[0]) inputRefs.current[0].focus();
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to resend code');
@@ -399,6 +417,36 @@ export default function OtpVerificationModal({
                 </span>
               </div>
             </div>
+
+            {/* Demo Auto-fill Banner & Quick Action */}
+            {demoOtp && !isExpired && (
+              <div className="p-3 rounded-xl border border-dashed border-amber-500/50 bg-amber-500/10 text-amber-300 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-amber-400 text-base">⚡</span>
+                  <div>
+                    <span className="font-semibold text-slate-200 block text-[11px]">
+                      Demo Verification Code Auto-Filled
+                    </span>
+                    <span className="font-mono text-amber-400 font-bold text-xs tracking-widest">
+                      {demoOtp}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const filled = demoOtp.trim().split('');
+                    setDigits(filled);
+                    setErrorMsg(null);
+                    submitVerification(demoOtp.trim());
+                  }}
+                  disabled={loading}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  Verify Now
+                </button>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

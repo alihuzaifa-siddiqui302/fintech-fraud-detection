@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Shield, LayoutDashboard, Sliders, Ban, ScrollText, LogOut } from 'lucide-react';
+import { Shield, LayoutDashboard, Sliders, Ban, ScrollText, LogOut, Network } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import clsx from 'clsx';
@@ -20,6 +20,7 @@ export const AnalystCockpit = () => {
     { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
     { to: '/admin/rules', label: 'Rules Manager', icon: Sliders },
     { to: '/admin/blacklists', label: 'Blacklists', icon: Ban },
+    { to: '/admin/graph', label: 'Syndicate Graph', icon: Network },
     { to: '/admin/audit', label: 'Audit Log', icon: ScrollText },
   ];
 

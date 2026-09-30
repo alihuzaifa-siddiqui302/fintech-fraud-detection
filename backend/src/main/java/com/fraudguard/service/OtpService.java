@@ -50,6 +50,9 @@ public class OtpService {
     @Value("${fraudguard.otp.max-attempts:3}")
     private int maxAttempts;
 
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
     /**
      * Issues a 6-digit cryptographic OTP challenge for an elevated-risk transaction in PENDING_REVIEW status.
      *
@@ -112,13 +115,25 @@ public class OtpService {
         log.info("OTP challenge issued successfully: txn=[{}] user=[{}] expiresAt=[{}]",
                 transactionId, user.getEmail(), expiresAt);
 
+        boolean isDemoCustomer = "customer@fraudguard.io".equalsIgnoreCase(user.getEmail());
+        // Demo code is strictly reserved ONLY for the demo account (customer@fraudguard.io).
+        // Any other user or real customer must retrieve their code from their email inbox.
+        String demoOtp = isDemoCustomer ? rawOtp : null;
+        log.info("OTP demoOtp resolution: user=[{}] isDemoCustomer={} demoOtp={}",
+                user.getEmail(), isDemoCustomer, demoOtp != null ? "[SET:" + demoOtp.length() + "digits]" : "NULL");
+
+        String userMsg = (demoOtp != null)
+                ? "Demo Mode: Verification code is " + rawOtp
+                : "Security verification code dispatched. Enter the 6-digit code to complete payment.";
+
         return new OtpChallengeDto(
                 txn.getId(),
                 challenge.getStatus(),
                 challenge.getExpiresAt(),
                 challenge.getMaxAttempts(),
                 maskEmail(user.getEmail()),
-                "Security verification code dispatched. Enter the 6-digit code to complete payment."
+                userMsg,
+                demoOtp
         );
     }
 
@@ -264,13 +279,23 @@ public class OtpService {
         }
 
         OtpChallenge challenge = challengeOpt.get();
+
+        // Inject demoOtp for demo customer or when SMTP is unconfigured (same logic as issueChallenge)
+        boolean isDemoCustomer = "customer@fraudguard.io".equalsIgnoreCase(user.getEmail());
+        boolean isMockSmtp = (mailUsername == null || mailUsername.isBlank());
+        // We can't recover the raw OTP (it's hashed), so we re-use the stored hash identity check.
+        // Instead, skip status endpoint demoOtp - rely on the checkout response demoOtp already in frontend state.
+        // Only resend scenario needs it: issueChallenge handles that already.
+        String statusDemoOtp = null; // raw OTP is hashed - cannot be recovered from status endpoint
+
         return new OtpChallengeDto(
                 txn.getId(),
                 challenge.getStatus(),
                 challenge.getExpiresAt(),
                 challenge.getMaxAttempts(),
                 maskEmail(user.getEmail()),
-                "Challenge status: " + challenge.getStatus()
+                "Challenge status: " + challenge.getStatus(),
+                statusDemoOtp
         );
     }
 

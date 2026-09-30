@@ -92,25 +92,25 @@ export const Checkout = () => {
       if (response.status === 'APPROVED') {
         toast.success(`Transaction approved with score ${response.riskScore}`, 'Checkout Approved');
       } else if (response.status === 'OTP_REQUIRED') {
+        console.log('[3DS Debug] Checkout response:', JSON.stringify(response));
         toast.info(
           "Security verification required. A 6-digit code has been dispatched to your email.",
           "3D Secure Step-Up"
         );
         const txnId = response.otpTransactionId || response.transactionId;
-        try {
-          const statusResp = await getOtpStatus(txnId);
-          setOtpData({
-            transactionId: txnId,
-            maskedEmail: statusResp.maskedEmail,
-            expiresAt: statusResp.expiresAt,
-          });
-        } catch {
-          setOtpData({
-            transactionId: txnId,
-            maskedEmail: 'your registered email',
-            expiresAt: null,
-          });
-        }
+        const demoOtpFromCheckout = response.demoOtp ?? null;
+
+        console.log('[3DS Debug] demoOtp from checkout:', demoOtpFromCheckout, '| full response:', JSON.stringify(response));
+
+        // Open modal immediately with all data from checkout response
+        // We do NOT call getOtpStatus — it can never return demoOtp (OTP is BCrypt-hashed in DB)
+        // and any async setOtpData call risks overwriting demoOtp with null via React batching
+        setOtpData({
+          transactionId: txnId,
+          maskedEmail: response.maskedEmail || 'your registered email',
+          expiresAt: response.expiresAt || null,
+          demoOtp: demoOtpFromCheckout,
+        });
         setShowOtpModal(true);
       } else if (response.status === 'PENDING_REVIEW') {
         toast.warning('Transaction flagged for compliance investigation', 'Hold for Review');
@@ -513,6 +513,7 @@ export const Checkout = () => {
           transactionId={otpData.transactionId}
           maskedEmail={otpData.maskedEmail}
           expiresAt={otpData.expiresAt}
+          demoOtp={otpData.demoOtp}
           onSuccess={handleOtpSuccess}
           onBlocked={handleOtpBlocked}
           onClose={() => setShowOtpModal(false)}

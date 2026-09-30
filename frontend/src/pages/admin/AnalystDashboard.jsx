@@ -8,6 +8,7 @@ import {
   ArrowRight,
   RefreshCw,
   SlidersHorizontal,
+  Unlock,
 } from 'lucide-react';
 import { getMetrics, getAnalystTransactions, apiClient } from '../../api/api';
 import { useAuth } from '../../hooks/useAuth';
@@ -132,9 +133,10 @@ export const AnalystDashboard = () => {
             if (dataMatch) {
               try {
                 const event = JSON.parse(dataMatch[1]);
-                if (event && event.transactionId) {
+                const txnId = event?.transactionId || event?.id;
+                if (event && txnId) {
                   // Trigger visual flash
-                  setFlashingTxnId(event.transactionId);
+                  setFlashingTxnId(txnId);
                   setTimeout(() => setFlashingTxnId(null), 3000);
 
                   // Refresh table and metrics using current state ref
@@ -147,8 +149,13 @@ export const AnalystDashboard = () => {
 
                   if (event.status === 'PENDING_REVIEW') {
                     stateRef.current.toast.warning(
-                      `High risk transaction ${event.transactionId.substring(0, 8)} flagged for review!`,
+                      `High risk transaction ${txnId.substring(0, 8)} flagged for review!`,
                       'SSE Review Alert'
+                    );
+                  } else if (event.status === 'APPROVED' && event.reviewedByName) {
+                    stateRef.current.toast.success(
+                      `Transaction ${txnId.substring(0, 8)} approved via analyst override!`,
+                      'Analyst Override'
                     );
                   }
                 }
@@ -267,16 +274,44 @@ export const AnalystDashboard = () => {
       header: 'Action',
       align: 'right',
       render: (row) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedTxn(row);
-          }}
-          className="p-1.5 rounded-lg bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-300 border border-slate-700 hover:border-brand-500/30 transition-all inline-flex items-center justify-center"
-          title="Open Forensic Drawer"
-        >
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center justify-end gap-1.5">
+          {row.status === 'BLOCKED' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTxn(row);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60 text-xs font-medium transition-all inline-flex items-center gap-1 shadow-sm"
+              title="Override & Approve Blocked Transaction"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>Override</span>
+            </button>
+          )}
+          {row.status === 'PENDING_REVIEW' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTxn(row);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 text-xs font-medium transition-all inline-flex items-center gap-1 shadow-sm"
+              title="Review & Adjudicate"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Review</span>
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedTxn(row);
+            }}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-300 border border-slate-700 hover:border-brand-500/30 transition-all inline-flex items-center justify-center"
+            title="Open Forensic Drawer"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       ),
     },
   ];

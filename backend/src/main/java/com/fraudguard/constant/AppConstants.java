@@ -123,6 +123,9 @@ public final class AppConstants {
         private DecisionThreshold() {}
 
         public static final int APPROVED_MAX = 29;
-        public static final int PENDING_MAX = 69;
+        /** Upper bound for OTP-only self-service (30–50). Customer challenged, no analyst queue. */
+        public static final int OTP_ONLY_MAX  = 50;
+        /** Upper bound for high-risk PENDING (51–69). Customer challenged AND analyst queue notified. */
+        public static final int PENDING_MAX   = 69;
     }
 }

@@ -13,5 +13,17 @@ public record OtpChallengeDto(
     OffsetDateTime expiresAt,
     int maxAttempts,
     String maskedEmail,
-    String message
-) {}
+    String message,
+    String demoOtp
+) {
+    public OtpChallengeDto(
+            String transactionId,
+            String status,
+            OffsetDateTime expiresAt,
+            int maxAttempts,
+            String maskedEmail,
+            String message
+    ) {
+        this(transactionId, status, expiresAt, maxAttempts, maskedEmail, message, null);
+    }
+}

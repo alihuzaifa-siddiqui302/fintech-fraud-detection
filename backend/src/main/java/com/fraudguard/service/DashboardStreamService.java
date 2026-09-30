@@ -85,6 +85,31 @@ public class DashboardStreamService {
     }
 
     /**
+     * Broadcasts a status-updated or adjudicated transaction to all actively connected analyst dashboards.
+     *
+     * @param transaction detailed analyst transaction view
+     */
+    public void broadcastTransactionUpdate(AnalystTransactionDto transaction) {
+        if (emitters.isEmpty()) {
+            return;
+        }
+
+        log.info("Broadcasting transaction update [{}] status [{}] to {} dashboard listeners",
+                transaction.id(), transaction.status(), emitters.size());
+
+        emitters.forEach((id, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("TRANSACTION_UPDATE")
+                        .data(transaction));
+            } catch (Exception ex) {
+                log.warn("Error pushing SSE update event to emitter [{}], removing listener: {}", id, ex.getMessage());
+                emitters.remove(id);
+            }
+        });
+    }
+
+    /**
      * Returns the concurrent map of active SSE emitters.
      *
      * @return map of emitter IDs to SseEmitter instances

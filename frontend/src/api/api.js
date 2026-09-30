@@ -173,4 +173,15 @@ export const getOtpStatus = async (transactionId) => {
   return response.data;
 };
 
+// Fraud Syndicate Link Graph
+export const getGraph = async (params) => {
+  const response = await apiClient.get('/api/v1/analyst/graph', { params });
+  return response.data;
+};
+
+export const getTransactionGraph = async (id) => {
+  const response = await apiClient.get(`/api/v1/analyst/graph/transaction/${id}`);
+  return response.data;
+};
+
 

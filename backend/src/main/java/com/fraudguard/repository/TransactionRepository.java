@@ -4,6 +4,7 @@ package com.fraudguard.repository;
 import com.fraudguard.entity.Transaction;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -151,5 +152,71 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
            "(LOWER(t.ipAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(CAST(t.id AS string)) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY t.createdAt DESC")
     Page<Transaction> findByStatusAndSearch(@Param("status") String status, @Param("search") String search, Pageable pageable);
+
+    /**
+     * Finds distinct user account identifiers associated with a given IP address since a cutoff time.
+     */
+    @Query("SELECT DISTINCT t.userId FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after")
+    List<String> findDistinctUserIdsByIp(@Param("ip") String ip, @Param("after") OffsetDateTime after);
+
+    /**
+     * Finds distinct IP addresses used by a specific user.
+     */
+    @Query("SELECT DISTINCT t.ipAddress FROM Transaction t WHERE t.userId = :userId")
+    List<String> findDistinctIpsByUser(@Param("userId") String userId);
+
+    /**
+     * Finds distinct non-null device fingerprints used by a specific user.
+     */
+    @Query("SELECT DISTINCT t.deviceFingerprint FROM Transaction t WHERE t.userId = :userId AND t.deviceFingerprint IS NOT NULL")
+    List<String> findDistinctFingerprintsByUser(@Param("userId") String userId);
+
+    /**
+     * Finds distinct user accounts that transacted from a given device fingerprint since a cutoff time.
+     */
+    @Query("SELECT DISTINCT t.userId FROM Transaction t WHERE t.deviceFingerprint = :fp AND t.createdAt > :after")
+    List<String> findDistinctUserIdsByFingerprint(@Param("fp") String fp, @Param("after") OffsetDateTime after);
+
+    /**
+     * Computes the historical average risk score evaluated for a customer account.
+     */
+    @Query("SELECT COALESCE(AVG(t.riskScore), 0.0) FROM Transaction t WHERE t.userId = :userId")
+    Double findAvgRiskScoreByUser(@Param("userId") String userId);
+
+    /**
+     * Counts the total transactions originating from a specific IP since a cutoff timestamp.
+     */
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after")
+    long countByIpAfter(@Param("ip") String ip, @Param("after") OffsetDateTime after);
+
+    /**
+     * Retrieves suspicious transactions evaluated at or above a risk threshold for graph seeding.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.riskScore >= :minScore AND t.createdAt > :after ORDER BY t.createdAt DESC")
+    List<Transaction> findSuspiciousSeedTransactions(@Param("minScore") int minScore, @Param("after") OffsetDateTime after, Pageable pageable);
+
+    /**
+     * Retrieves seed transactions for a specific user.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.userId = :userId AND t.createdAt > :after ORDER BY t.createdAt DESC")
+    List<Transaction> findSeedTransactionsByUser(@Param("userId") String userId, @Param("after") OffsetDateTime after, Pageable pageable);
+
+    /**
+     * Retrieves seed transactions for a specific IP address.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after ORDER BY t.createdAt DESC")
+    List<Transaction> findSeedTransactionsByIp(@Param("ip") String ip, @Param("after") OffsetDateTime after, Pageable pageable);
+
+    /**
+     * Retrieves seed transactions for a specific device fingerprint.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.deviceFingerprint = :fp AND t.createdAt > :after ORDER BY t.createdAt DESC")
+    List<Transaction> findSeedTransactionsByFingerprint(@Param("fp") String fp, @Param("after") OffsetDateTime after, Pageable pageable);
+
+    /**
+     * Retrieves recent seed transactions when no specific filters or elevated scores match.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.createdAt > :after ORDER BY t.createdAt DESC")
+    List<Transaction> findRecentSeedTransactions(@Param("after") OffsetDateTime after, Pageable pageable);
 }
 

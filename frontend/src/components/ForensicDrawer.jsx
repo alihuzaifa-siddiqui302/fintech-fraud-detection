@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   X,
   Shield,
@@ -13,6 +14,8 @@ import {
   Globe,
   Monitor,
   Cpu,
+  Unlock,
+  Network,
 } from 'lucide-react';
 import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { adjudicateTransaction, addBlacklist, getTransactionDetail } from '../api/api';
@@ -61,6 +64,7 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
   const [submittingBlacklist, setSubmittingBlacklist] = useState(false);
 
   const toast = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (initialTransaction?.id && isOpen) {
@@ -328,10 +332,27 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
 
             {/* SECTION 3 — Intelligence Chips */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-brand-400" />
-                <span>Forensic Intelligence</span>
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-brand-400" />
+                  <span>Forensic Intelligence</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (transaction.userId) params.set('seedUserId', transaction.userId);
+                    if (transaction.ipAddress) params.set('seedIpAddress', transaction.ipAddress);
+                    if (transaction.deviceFingerprint) params.set('seedFingerprint', transaction.deviceFingerprint);
+                    onClose?.();
+                    navigate(`/admin/graph?${params.toString()}`);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Network className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>🕸️ View Syndicate Graph</span>
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 {/* IP Address */}
@@ -499,6 +520,7 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
             </div>
 
             {/* SECTION 4 — Analyst Actions */}
+            {/* SECTION 4A — Pending Review Analyst Actions */}
             {transaction.status === 'PENDING_REVIEW' && (
               <div className="bg-slate-800/60 rounded-2xl border border-amber-500/40 p-5 space-y-4">
                 <div className="flex items-center gap-2 text-amber-400">
@@ -554,6 +576,135 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
                       <ShieldAlert className="w-4 h-4" />
                     )}
                     <span>Block Transaction</span>
+                  </button>
+                </div>
+
+                {/* Secondary Blacklist IP Action */}
+                <div className="pt-2 border-t border-slate-700/60">
+                  {!showBlacklistForm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowBlacklistForm(true)}
+                      className="text-xs text-red-400 hover:text-red-300 font-medium inline-flex items-center gap-1.5 transition-colors"
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                      <span>Blacklist this IP ({transaction.ipAddress})</span>
+                    </button>
+                  ) : (
+                    <form onSubmit={handleAddBlacklist} className="space-y-2 mt-2">
+                      <label className="block text-[11px] text-slate-300 font-medium">
+                        Blacklist Reason:
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={blacklistReason}
+                        onChange={(e) => setBlacklistReason(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="submit"
+                          disabled={submittingBlacklist}
+                          className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
+                        >
+                          {submittingBlacklist ? 'Adding...' : 'Confirm Blacklist'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowBlacklistForm(false)}
+                          className="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 4B — Blocked Transaction Analyst Override Control */}
+            {transaction.status === 'BLOCKED' && (
+              <div className="bg-slate-800/70 rounded-2xl border border-emerald-500/40 p-5 space-y-4 relative overflow-hidden shadow-lg shadow-emerald-950/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <Unlock className="w-4 h-4" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider">
+                      Analyst Override: Blocked Transaction
+                    </h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    Decline Control Active
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  This transaction was declined by automated risk policies. As an authorized compliance analyst, you can overturn the decline, document regulatory justification, and release the transaction to <span className="font-semibold text-emerald-400">APPROVED</span>.
+                </p>
+
+                {/* Quick Presets for Demo */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-slate-400 font-medium block">
+                    Quick Rationale Presets (Click to autofill):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setNotes('Compliance override: Approved for academic demonstration and professor evaluation.')}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-[11px] text-brand-300 transition-colors"
+                    >
+                      🎓 Professor Demo Override
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNotes('Customer identity and legitimate transaction ownership verified via out-of-band communication.')}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-[11px] text-emerald-300 transition-colors"
+                    >
+                      🆔 Customer ID Verified
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNotes('Manual investigation completed: Elevated telemetry risk determined to be a false positive.')}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-[11px] text-amber-300 transition-colors"
+                    >
+                      🔄 False Positive Overturn
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Resolution Notes (Required for Audit Trail)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Enter compliance justification for overturning the block..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder-slate-500"
+                  />
+                  <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
+                    <span>Minimum 5 characters required</span>
+                    <span className={notes.length < 5 ? 'text-amber-400' : 'text-emerald-400'}>
+                      {notes.length} characters
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    disabled={submittingAction !== null || notes.trim().length < 5}
+                    onClick={() => handleAdjudicate('APPROVE')}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs shadow-lg shadow-emerald-950/50 transition-all cursor-pointer"
+                  >
+                    {submittingAction === 'APPROVE' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlock className="w-4 h-4" />
+                    )}
+                    <span>Override Block & Approve Transaction</span>
                   </button>
                 </div>
 

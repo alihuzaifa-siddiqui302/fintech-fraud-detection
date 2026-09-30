@@ -26,6 +26,7 @@ import com.fraudguard.messaging.event.TransactionKafkaEvent;
 import com.fraudguard.repository.AuditLogRepository;
 import com.fraudguard.repository.BlacklistRepository;
 import com.fraudguard.repository.FraudRuleRepository;
+import com.fraudguard.repository.OtpChallengeRepository;
 import com.fraudguard.repository.SessionSignalRepository;
 import com.fraudguard.repository.TransactionBlacklistHitRepository;
 import com.fraudguard.repository.TransactionRepository;
@@ -72,6 +73,7 @@ public class AnalystService {
     private final MapperService mapperService;
     private final ObjectMapper objectMapper;
     private final FraudGuardEventProducer eventProducer;
+    private final OtpChallengeRepository otpChallengeRepository;
 
     private final Map<String, User> userCache = new ConcurrentHashMap<>();
 
@@ -186,9 +188,10 @@ public class AnalystService {
         Transaction txn = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found with ID: " + transactionId));
 
-        if (!AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(txn.getStatus())) {
+        if (!AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(txn.getStatus())
+                && !AppConstants.TransactionStatus.BLOCKED.equalsIgnoreCase(txn.getStatus())) {
             throw new IllegalArgumentException(
-                    "Transaction status must be PENDING_REVIEW to adjudicate. Current status: " + txn.getStatus()
+                    "Transaction status must be PENDING_REVIEW or BLOCKED to adjudicate. Current status: " + txn.getStatus()
             );
         }
 
@@ -205,6 +208,22 @@ public class AnalystService {
         txn.setStatus(newStatus);
         txn.setReviewedBy(analyst.getId());
         txn.setResolutionNotes(request.getNotes());
+
+        if (AppConstants.TransactionStatus.APPROVED.equals(newStatus)) {
+            if ("OTP_FAILED".equalsIgnoreCase(txn.getOtpStatus())
+                    || "AWAITING_OTP".equalsIgnoreCase(txn.getOtpStatus())
+                    || "EXPIRED".equalsIgnoreCase(txn.getOtpStatus())) {
+                txn.setOtpStatus("ANALYST_OVERRIDE");
+            }
+
+            // Mark any pending OTP challenge as VERIFIED/RESOLVED so client state clears
+            otpChallengeRepository.findByTransactionIdAndStatus(transactionId, "PENDING")
+                    .ifPresent(ch -> {
+                        ch.setStatus("VERIFIED");
+                        ch.setVerifiedAt(OffsetDateTime.now());
+                        otpChallengeRepository.save(ch);
+                    });
+        }
 
         Transaction updatedTxn = transactionRepository.save(txn);
         AnalystTransactionDto afterDto = mapperService.toAnalystDto(updatedTxn, ruleHits, analyst);
@@ -228,6 +247,9 @@ public class AnalystService {
 
         // Broadcast decision event to Kafka
         publishTxnDecidedEvent(updatedTxn, analyst);
+
+        // Broadcast live update to all analyst dashboard subscribers
+        dashboardStreamService.broadcastTransactionUpdate(afterDto);
 
         return afterDto;
     }
