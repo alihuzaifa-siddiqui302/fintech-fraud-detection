@@ -37,8 +37,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "@fraudguard-api-url"
-  }
+  ]
 }
