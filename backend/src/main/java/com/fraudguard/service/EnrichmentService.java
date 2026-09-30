@@ -11,9 +11,12 @@ import com.fraudguard.dto.request.CheckoutRequest;
 import com.fraudguard.engine.model.EnrichedTransactionContext;
 import com.fraudguard.entity.User;
 import com.fraudguard.repository.TransactionRepository;
+import com.fraudguard.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +42,7 @@ public class EnrichmentService {
     private final DeviceFingerprintService deviceFingerprintService;
     private final TransactionRepository transactionRepository;
     private final RedisVelocityService redisVelocityService;
+    private final UserRepository userRepository;
 
     /**
      * Enriches a transaction request with network, device, historical, and velocity signals.
@@ -93,8 +97,25 @@ public class EnrichmentService {
 
         String ipTimezone = ipApi.timezone();
         boolean timezoneMismatch = Boolean.TRUE.equals(request.getSimulateForeignIp())
-                || (request.getBrowserTimezone() != null && ipTimezone != null && !ipTimezone.isBlank()
-                    && !request.getBrowserTimezone().equalsIgnoreCase(ipTimezone));
+                || !areTimezonesCompatible(request.getBrowserTimezone(), ipTimezone);
+
+        // Calibrate demo user registered home country to active testing location if not simulating foreign IP
+        String effectiveHomeCountry = user.getHomeCountry();
+        if (!Boolean.TRUE.equals(request.getSimulateForeignIp()) && ipCountry != null && !ipCountry.isBlank()) {
+            if ("customer@fraudguard.io".equalsIgnoreCase(user.getEmail())) {
+                effectiveHomeCountry = ipCountry;
+                if (!ipCountry.equalsIgnoreCase(user.getHomeCountry())) {
+                    user.setHomeCountry(ipCountry);
+                    try {
+                        userRepository.save(user);
+                        log.info("Calibrated demo customer [{}] home country to [{}] based on active network origin",
+                                user.getEmail(), ipCountry);
+                    } catch (Exception ex) {
+                        log.warn("Could not persist calibrated demo home country: {}", ex.getMessage());
+                    }
+                }
+            }
+        }
 
         // 4. Device Fingerprint Resolution & History Check
         String effectiveFingerprint = Boolean.TRUE.equals(request.getSimulateNewDevice())
@@ -187,9 +208,30 @@ public class EnrichmentService {
                 // User Principal Info
                 .userId(user.getId())
                 .userEmail(user.getEmail())
-                .userHomeCountry(user.getHomeCountry())
+                .userHomeCountry(effectiveHomeCountry)
                 .userCreatedAt(user.getCreatedAt())
                 .build();
+    }
+
+    /**
+     * Verifies if browser and network timezones represent the same geographic time window or offset.
+     */
+    private boolean areTimezonesCompatible(String browserTz, String ipTz) {
+        if (browserTz == null || ipTz == null || browserTz.isBlank() || ipTz.isBlank()) {
+            return true;
+        }
+        if (browserTz.equalsIgnoreCase(ipTz)) {
+            return true;
+        }
+        try {
+            ZoneId bZone = ZoneId.of(browserTz.trim());
+            ZoneId iZone = ZoneId.of(ipTz.trim());
+            Instant now = Instant.now();
+            return bZone.getRules().getOffset(now).equals(iZone.getRules().getOffset(now));
+        } catch (Exception e) {
+            // Fail open on timezone string parsing/alias discrepancies (e.g. Asia/Kolkata vs Asia/Calcutta)
+            return true;
+        }
     }
 
     /**
