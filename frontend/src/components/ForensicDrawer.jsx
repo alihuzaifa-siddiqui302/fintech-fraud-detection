@@ -16,6 +16,7 @@ import {
   Cpu,
   Unlock,
   Network,
+  ShieldCheck,
 } from 'lucide-react';
 import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { adjudicateTransaction, addBlacklist, getTransactionDetail } from '../api/api';
@@ -529,6 +530,16 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
                     Manual Adjudication Required
                   </h3>
                 </div>
+
+                {transaction.resolutionNotes && (
+                  <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs text-blue-200 flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-blue-300 block">3D Secure Step-Up Verification Status</span>
+                      <p className="text-slate-300 text-[11px] leading-relaxed">{transaction.resolutionNotes}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">

@@ -127,13 +127,21 @@ export const Checkout = () => {
 
   const handleOtpSuccess = (verificationResult) => {
     setShowOtpModal(false);
+    const finalStatus = verificationResult?.transactionStatus || 'APPROVED';
+    const isPending = finalStatus === 'PENDING_REVIEW';
     setResult((prev) => ({
       ...prev,
-      status: 'APPROVED',
-      statusColor: 'green',
-      statusMessage: 'Transaction approved after 3DS identity verification.',
+      status: finalStatus,
+      statusColor: isPending ? 'amber' : 'green',
+      statusMessage: isPending
+        ? (verificationResult?.message || '3D Secure passed. Transaction held for compliance review due to elevated risk.')
+        : 'Transaction approved after 3DS identity verification.',
     }));
-    toast.success('3D Secure verification passed! Payment approved.', 'Verification Success');
+    if (isPending) {
+      toast.warning('3D Secure verified. Transaction held for compliance analyst review.', 'Pending Review');
+    } else {
+      toast.success('3D Secure verification passed! Payment approved.', 'Verification Success');
+    }
   };
 
   const handleOtpBlocked = (reason) => {

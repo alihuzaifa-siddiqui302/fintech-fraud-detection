@@ -2,17 +2,22 @@
 package com.fraudguard.service;
 
 import com.fraudguard.constant.AppConstants;
+import com.fraudguard.dto.response.AnalystTransactionDto;
 import com.fraudguard.dto.response.OtpChallengeDto;
 import com.fraudguard.dto.response.OtpVerifyResponseDto;
 import com.fraudguard.entity.OtpChallenge;
+import com.fraudguard.entity.SessionSignal;
 import com.fraudguard.entity.Transaction;
+import com.fraudguard.entity.TransactionRuleHit;
 import com.fraudguard.entity.User;
 import com.fraudguard.exception.ApiException;
 import com.fraudguard.exception.ResourceNotFoundException;
 import com.fraudguard.messaging.FraudGuardEventProducer;
 import com.fraudguard.messaging.event.TransactionKafkaEvent;
 import com.fraudguard.repository.OtpChallengeRepository;
+import com.fraudguard.repository.SessionSignalRepository;
 import com.fraudguard.repository.TransactionRepository;
+import com.fraudguard.repository.TransactionRuleHitRepository;
 import com.fraudguard.repository.UserRepository;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
@@ -41,6 +46,10 @@ public class OtpService {
     private final OtpEmailService otpEmailService;
     private final PasswordEncoder passwordEncoder;
     private final FraudGuardEventProducer eventProducer;
+    private final DashboardStreamService dashboardStreamService;
+    private final MapperService mapperService;
+    private final TransactionRuleHitRepository transactionRuleHitRepository;
+    private final SessionSignalRepository sessionSignalRepository;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -224,34 +233,69 @@ public class OtpService {
                     "RETRY");
         }
 
-        // 4. Success: Approve transaction and finalize challenge
+        // 4. Success: Finalize challenge and determine whether to auto-approve (score <= 50) or hold for analyst review (score > 50)
         challenge.setStatus("VERIFIED");
         challenge.setVerifiedAt(now);
-        txn.setStatus(AppConstants.TransactionStatus.APPROVED);
         txn.setOtpStatus("OTP_VERIFIED");
+
+        final int score = txn.getRiskScore() != null ? txn.getRiskScore() : 0;
+        final boolean isHighRisk = score > AppConstants.DecisionThreshold.OTP_ONLY_MAX;
+
+        String finalStatus;
+        String message;
+
+        if (isHighRisk) {
+            // High-risk band (score 51-69): Customer proved identity, but risk score is too high to auto-approve.
+            // Retain in PENDING_REVIEW for human analyst adjudication!
+            finalStatus = AppConstants.TransactionStatus.PENDING_REVIEW;
+            txn.setStatus(finalStatus);
+            txn.setResolutionNotes("3DS OTP identity verified by customer. Retained in PENDING_REVIEW for compliance analyst adjudication due to elevated risk score (" + score + ").");
+            message = "Identity verified via 3DS OTP. Held for compliance review due to elevated risk score (" + score + ").";
+            log.info("3DS OTP verified for high-risk txn [{}] score={} — retained in PENDING_REVIEW for analyst queue", transactionId, score);
+        } else {
+            // Low-medium risk band (score 30-50): Customer self-serves -> auto APPROVED
+            finalStatus = AppConstants.TransactionStatus.APPROVED;
+            txn.setStatus(finalStatus);
+            txn.setResolutionNotes("Approved automatically following successful 3DS SMS OTP challenge completion");
+            message = "Payment successfully verified and approved.";
+            log.info("3DS OTP verified for low-medium risk txn [{}] score={} — transaction APPROVED", transactionId, score);
+        }
+
         otpChallengeRepository.save(challenge);
-        Transaction approvedTxn = transactionRepository.save(txn);
+        Transaction savedTxn = transactionRepository.save(txn);
 
         // Publish transaction decision event to Kafka
         eventProducer.publishTransaction(new TransactionKafkaEvent(
-                approvedTxn.getId(),
-                approvedTxn.getUserId(),
-                approvedTxn.getAmount(),
-                approvedTxn.getCurrency(),
-                approvedTxn.getStatus(),
-                approvedTxn.getRiskScore() != null ? approvedTxn.getRiskScore() : 0,
-                approvedTxn.getIpAddress(),
-                approvedTxn.getIpCountry(),
-                approvedTxn.getIsVpn() != null && approvedTxn.getIsVpn(),
-                approvedTxn.getIsTor() != null && approvedTxn.getIsTor(),
+                savedTxn.getId(),
+                savedTxn.getUserId(),
+                savedTxn.getAmount(),
+                savedTxn.getCurrency(),
+                savedTxn.getStatus(),
+                savedTxn.getRiskScore() != null ? savedTxn.getRiskScore() : 0,
+                savedTxn.getIpAddress(),
+                savedTxn.getIpCountry(),
+                savedTxn.getIsVpn() != null && savedTxn.getIsVpn(),
+                savedTxn.getIsTor() != null && savedTxn.getIsTor(),
                 List.of(),
                 OffsetDateTime.now(),
                 "TXN_DECIDED"
         ));
 
-        log.info("3DS OTP verified successfully — transaction [{}] APPROVED", transactionId);
-        return new OtpVerifyResponseDto(true, "APPROVED", "OTP_VERIFIED", 0,
-                "Payment successfully verified and approved.", "APPROVED");
+        // Push real-time SSE update to compliance analyst dashboard
+        try {
+            List<TransactionRuleHit> ruleHits = transactionRuleHitRepository.findByTransactionId(savedTxn.getId());
+            SessionSignal sessionSignal = sessionSignalRepository.findByTransactionId(savedTxn.getId()).orElse(null);
+            AnalystTransactionDto analystDto = mapperService.toAnalystDto(savedTxn, ruleHits, null, sessionSignal);
+            if (isHighRisk) {
+                dashboardStreamService.broadcastPendingTransaction(analystDto);
+            } else {
+                dashboardStreamService.broadcastTransactionUpdate(analystDto);
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to dispatch SSE update to analyst dashboard for txn [{}]: {}", savedTxn.getId(), ex.getMessage());
+        }
+
+        return new OtpVerifyResponseDto(true, finalStatus, "OTP_VERIFIED", 0, message, finalStatus);
     }
 
     /**

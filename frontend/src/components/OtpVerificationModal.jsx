@@ -48,6 +48,7 @@ export default function OtpVerificationModal({
   // Modal terminal states: 'INPUT' | 'SUCCESS' | 'BLOCKED'
   const [modalState, setModalState] = useState('INPUT');
   const [blockedReason, setBlockedReason] = useState('');
+  const [verifyResult, setVerifyResult] = useState(null);
 
   // Expiry timer (5 minutes countdown)
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes = 300s
@@ -191,6 +192,7 @@ export default function OtpVerificationModal({
 
     try {
       const result = await verifyOtp(transactionId, otp);
+      setVerifyResult(result);
 
       if (result.success) {
         setModalState('SUCCESS');
@@ -280,16 +282,35 @@ export default function OtpVerificationModal({
         {/* STATE 1: SUCCESSFUL VERIFICATION */}
         {modalState === 'SUCCESS' && (
           <div className="text-center py-6 space-y-4 animate-scaleUp">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-              <CheckCircle2 className="w-10 h-10 animate-bounce" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Transaction Approved!</h3>
-              <p className="text-sm text-slate-300 mt-1">3D Secure identity successfully verified.</p>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 font-mono">
-              Redirecting to checkout summary...
-            </div>
+            {verifyResult?.transactionStatus === 'PENDING_REVIEW' ? (
+              <>
+                <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
+                  <ShieldAlert className="w-10 h-10 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Identity Verified — Under Review</h3>
+                  <p className="text-sm text-amber-300/90 mt-1">
+                    3D Secure identity confirmed. Held for analyst review due to elevated risk score.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 font-mono">
+                  Queued in Compliance Analyst Cockpit...
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+                  <CheckCircle2 className="w-10 h-10 animate-bounce" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Transaction Approved!</h3>
+                  <p className="text-sm text-slate-300 mt-1">3D Secure identity successfully verified.</p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 font-mono">
+                  Redirecting to checkout summary...
+                </div>
+              </>
+            )}
           </div>
         )}
 
