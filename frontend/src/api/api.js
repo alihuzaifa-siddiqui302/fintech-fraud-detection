@@ -140,3 +140,20 @@ export const getAuditLogs = async (page = 0, size = 20, action, actorEmail) => {
 export const getDashboardStreamUrl = () => {
   return `${API_BASE_URL}/api/v1/analyst/dashboard/stream`;
 };
+
+// AI SAR Reports (Gemini 2.0 Flash)
+export const generateSar = async (transactionId) => {
+  const response = await apiClient.post(`/api/v1/analyst/transactions/${transactionId}/sar`);
+  return response.data;
+};
+
+export const getSarReports = async (transactionId) => {
+  const response = await apiClient.get(`/api/v1/analyst/transactions/${transactionId}/sar`);
+  return response.data;
+};
+
+export const updateSarStatus = async (sarId, status, notes) => {
+  const response = await apiClient.patch(`/api/v1/analyst/sar/${sarId}/status`, { status, notes });
+  return response.data;
+};
+

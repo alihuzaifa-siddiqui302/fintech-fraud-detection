@@ -102,6 +102,13 @@ fraudguard:
       base-url: http://ip-api.com/json
       timeout-ms: 3000
       cache-ttl-hours: 24
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: https://generativelanguage.googleapis.com/v1beta/models
+      model: gemini-2.0-flash
+      timeout-ms: 30000
+      temperature: 0.3
+      max-output-tokens: 2048
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
   velocity:

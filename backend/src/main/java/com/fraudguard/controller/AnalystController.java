@@ -3,6 +3,7 @@ package com.fraudguard.controller;
 
 import com.fraudguard.dto.request.AddBlacklistRequest;
 import com.fraudguard.dto.request.AdjudicateRequest;
+import com.fraudguard.dto.request.SarStatusUpdateRequest;
 import com.fraudguard.dto.request.UpdateRuleRequest;
 import com.fraudguard.dto.response.AnalystTransactionDto;
 import com.fraudguard.dto.response.AuditLogDto;
@@ -10,7 +11,9 @@ import com.fraudguard.dto.response.BlacklistDto;
 import com.fraudguard.dto.response.FraudRuleDto;
 import com.fraudguard.dto.response.MetricsDto;
 import com.fraudguard.dto.response.PagedResponse;
+import com.fraudguard.dto.response.SarReportDto;
 import com.fraudguard.service.AnalystService;
+import com.fraudguard.service.SarService;
 import com.fraudguard.util.IpExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -18,6 +21,7 @@ import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,6 +50,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AnalystController {
 
     private final AnalystService analystService;
+    private final SarService sarService;
     private final IpExtractor ipExtractor;
 
     /**
@@ -221,6 +227,59 @@ public class AnalystController {
     @GetMapping(value = "/dashboard/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamDashboard() {
         return analystService.subscribeDashboardStream();
+    }
+
+    /**
+     * Generates a formal AI Suspicious Activity Report (SAR) narrative for a transaction using Gemini AI.
+     *
+     * @param id transaction UUID
+     * @param httpRequest HTTP servlet request
+     * @return ResponseEntity containing created SarReportDto with 201 Created status
+     */
+    @PostMapping("/transactions/{id}/sar")
+    public ResponseEntity<SarReportDto> generateSar(
+            @PathVariable String id,
+            HttpServletRequest httpRequest
+    ) {
+        String analystEmail = getAuthenticatedEmail();
+        String clientIp = ipExtractor.extractClientIp(httpRequest);
+
+        log.info("Analyst [{}] requested AI SAR generation for transaction [{}]", analystEmail, id);
+        SarReportDto created = sarService.generateSar(id, analystEmail, clientIp);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    /**
+     * Retrieves all SAR drafts and filed reports generated for a given transaction.
+     *
+     * @param id transaction UUID
+     * @return ResponseEntity containing List of SarReportDto
+     */
+    @GetMapping("/transactions/{id}/sar")
+    public ResponseEntity<List<SarReportDto>> getSarReports(@PathVariable String id) {
+        return ResponseEntity.ok(sarService.getReportsForTransaction(id));
+    }
+
+    /**
+     * Updates the lifecycle status of an AI SAR report (DRAFT -> FINAL -> FILED).
+     *
+     * @param sarId SAR report UUID
+     * @param request validated status update payload
+     * @param httpRequest HTTP servlet request
+     * @return ResponseEntity containing updated SarReportDto
+     */
+    @PatchMapping("/sar/{sarId}/status")
+    public ResponseEntity<SarReportDto> updateSarStatus(
+            @PathVariable String sarId,
+            @Valid @RequestBody SarStatusUpdateRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String analystEmail = getAuthenticatedEmail();
+        String clientIp = ipExtractor.extractClientIp(httpRequest);
+
+        log.info("Analyst [{}] updating status of SAR [{}] to [{}]", analystEmail, sarId, request.getStatus());
+        SarReportDto updated = sarService.updateSarStatus(sarId, request.getStatus(), request.getNotes(), analystEmail, clientIp);
+        return ResponseEntity.ok(updated);
     }
 
     private String getAuthenticatedEmail() {

@@ -20,6 +20,7 @@ import { useToast } from '../context/ToastContext';
 import StatusBadge from './StatusBadge';
 import CopyButton from './CopyButton';
 import CountryFlag from './CountryFlag';
+import SarPanel from './SarPanel';
 import clsx from 'clsx';
 
 const ALL_SYSTEM_RULES = [
@@ -614,6 +615,14 @@ export const ForensicDrawer = ({ transaction: initialTransaction, isOpen, onClos
                   <p className="text-slate-400 italic">"{transaction.resolutionNotes}"</p>
                 )}
               </div>
+            )}
+
+            {/* Compliance Documents: AI Suspicious Activity Report (SAR) */}
+            {(transaction.status === 'BLOCKED' || transaction.reviewedBy || transaction.reviewedByName) && (
+              <SarPanel
+                transactionId={transaction.id}
+                transactionStatus={transaction.status}
+              />
             )}
           </div>
         </div>

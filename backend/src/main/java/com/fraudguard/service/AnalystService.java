@@ -27,6 +27,7 @@ import com.fraudguard.repository.AuditLogRepository;
 import com.fraudguard.repository.BlacklistRepository;
 import com.fraudguard.repository.FraudRuleRepository;
 import com.fraudguard.repository.SessionSignalRepository;
+import com.fraudguard.repository.TransactionBlacklistHitRepository;
 import com.fraudguard.repository.TransactionRepository;
 import com.fraudguard.repository.TransactionRuleHitRepository;
 import com.fraudguard.repository.UserRepository;

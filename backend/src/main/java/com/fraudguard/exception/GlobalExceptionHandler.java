@@ -48,6 +48,54 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("Resource not found: {} on path: {}", exception.getMessage(), request.getRequestURI());
+        ErrorResponse errorResponse = new ErrorResponse(
+                "NOT_FOUND",
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                Instant.now(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ErrorResponse> handleApiException(
+            ApiException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("API Exception ({}): {} on path: {}", exception.getStatus(), exception.getMessage(), request.getRequestURI());
+        ErrorResponse errorResponse = new ErrorResponse(
+                exception.getStatus().name(),
+                exception.getMessage(),
+                exception.getStatus().value(),
+                Instant.now(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(exception.getStatus()).body(errorResponse);
+    }
+
+    @ExceptionHandler(SarGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleSarGenerationException(
+            SarGenerationException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("SAR Generation Error: {} on path: {}", exception.getMessage(), request.getRequestURI());
+        ErrorResponse errorResponse = new ErrorResponse(
+                "SAR_GENERATION_FAILED",
+                exception.getMessage(),
+                HttpStatus.BAD_GATEWAY.value(),
+                Instant.now(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
+    }
+
     /**
      * Handles unauthorized access violations (403 FORBIDDEN).
      *

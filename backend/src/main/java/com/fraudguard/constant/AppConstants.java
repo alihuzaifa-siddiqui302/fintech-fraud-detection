@@ -100,6 +100,8 @@ public final class AppConstants {
         public static final String TXN_ADJUDICATED = "TXN_ADJUDICATED";
         public static final String TXN_APPROVED = "TXN_APPROVED";
         public static final String TXN_BLOCKED = "TXN_BLOCKED";
+        public static final String SAR_GENERATED = "SAR_GENERATED";
+        public static final String SAR_STATUS_UPDATED = "SAR_STATUS_UPDATED";
     }
 
     /**
