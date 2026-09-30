@@ -3,7 +3,7 @@
 > **High-throughput, sub-100ms financial fraud detection, compliance adjudication, and AI-powered investigation cockpit.**
 
 [![CI](https://github.com/alihuzaifa-siddiqui302/fintech-fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/alihuzaifa-siddiqui302/fintech-fraud-detection/actions/workflows/ci.yml)
-![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat&logo=openjdk&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2.5-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?style=flat&logo=react&logoColor=black)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)
@@ -131,10 +131,17 @@ Copy-Item .env.example .env
 ### Step 3: Start the Application with Docker Compose
 Launch all 6 services (Frontend, Backend, PostgreSQL, Redis, Kafka, Zookeeper) with one command:
 ```bash
+# Standard local development stack:
 docker compose up --build -d
+
+# Or production-hardened local simulation stack:
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-*(This compiles the Java 17 backend, builds the React 18 production bundle with Nginx, applies all Flyway database migrations `V1__` through `V6__`, and provisions Kafka topics).*
+*(This compiles the Java 21 backend, builds the React 18 production bundle with Nginx, applies all Flyway database migrations `V1__` through `V6__`, and provisions Kafka topics).*
+
+> 🚀 **Deploying to Cloud Free-Tiers (Vercel + Render + Neon + Upstash)?**
+> See the complete step-by-step production setup in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
@@ -295,11 +302,15 @@ The engine evaluates each transaction against active rules loaded from the datab
 
 ```
 fintech-fraud-detection/
-├── .github/workflows/ci.yml       # GitHub Actions CI pipeline
+├── .github/workflows/ci.yml       # GitHub Actions CI pipeline (JDK 21 & Node 20)
+├── DEPLOYMENT.md                  # Complete production & cloud deployment guide
+├── render.yaml                    # Render.com Docker Web Service deployment manifest
+├── docker-compose.yml             # Local development 6-service orchestration
+├── docker-compose.prod.yml        # Production-hardened local simulation stack
 ├── backend/
 │   ├── src/main/java/com/fraudguard/
-│   │   ├── client/                # IpApiClient & external intelligence
-│   │   ├── config/                # Security, Redis, Kafka, Web configs
+│   │   ├── client/                # IpApiClient, GeminiApiClient, IPQS client
+│   │   ├── config/                # Security, Redis, Kafka, Web, JWT configs
 │   │   ├── controller/            # REST API endpoints
 │   │   ├── dto/                   # DTO records and payloads
 │   │   ├── engine/                # Core 20-rule risk scoring engine
@@ -310,9 +321,11 @@ fintech-fraud-detection/
 │   │   └── service/               # Checkout, Enrichment, Analyst, AI SAR services
 │   ├── src/main/resources/
 │   │   ├── db/migration/          # Flyway schema V1 through V6
-│   │   └── application.yml        # Spring Boot configuration
-│   ├── Dockerfile                 # Multi-stage Java 17 container build
-│   └── pom.xml                    # Maven dependencies
+│   │   ├── application.yml        # Common base configuration & active profile switch
+│   │   ├── application-dev.yml    # Local development profile (Docker containers)
+│   │   └── application-prod.yml   # Production profile (Neon, Upstash Redis/Kafka)
+│   ├── Dockerfile                 # Multi-stage Java 21 container build (JRE 21 Alpine)
+│   └── pom.xml                    # Maven dependencies (Java 21, Spring Boot 3.2.5)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                   # Axios API clients & SSE listeners
@@ -321,9 +334,10 @@ fintech-fraud-detection/
 │   │   ├── pages/                 # Checkout, Transactions, Dashboard, FraudGraph
 │   │   ├── App.jsx                # React Router & role-based guards
 │   │   └── main.jsx               # React entrypoint
-│   ├── Dockerfile                 # Multi-stage Vite + Nginx build
+│   ├── vercel.json                # Vercel SPA routing rewrites & security headers
+│   ├── nginx.conf                 # Hardened Nginx configuration with SSE reverse proxy
+│   ├── Dockerfile                 # Multi-stage Vite + Nginx Alpine build
 │   └── package.json               # Frontend dependencies
-├── docker-compose.yml             # Full 6-service orchestration
 └── README.md                      # Platform documentation
 ```
 
