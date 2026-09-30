@@ -1,0 +1,68 @@
+# ==============================================================================
+# FraudGuard — Render.com Deployment Manifest
+# Deploys the Spring Boot backend as a free-tier Web Service
+# Docs: https://render.com/docs/yaml-spec
+# ==============================================================================
+
+services:
+  - type: web
+    name: fraudguard-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # ── PostgreSQL (Neon free tier) ─────────────────────────────────────────
+      # Format: postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/dbname?sslmode=require
+      - key: DATABASE_URL
+        sync: false    # set manually in Render dashboard
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # ── Redis (Upstash free tier) ───────────────────────────────────────────
+      # Format: rediss://default:<token>@<host>:<port>
+      - key: REDIS_URL
+        sync: false
+
+      # ── Kafka (Upstash free tier) ───────────────────────────────────────────
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_KEY
+        sync: false
+      - key: KAFKA_SECRET
+        sync: false
+
+      # ── Auth ────────────────────────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true   # Render auto-generates a secure random value
+
+      # ── External APIs ───────────────────────────────────────────────────────
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: IPQS_API_KEY
+        sync: false
+
+      # ── Email / OTP ─────────────────────────────────────────────────────────
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: OTP_ENABLED
+        value: "true"
+
+      # ── CORS ────────────────────────────────────────────────────────────────
+      # Set to your Vercel frontend URL after deploying the frontend
+      - key: CORS_ORIGINS
+        sync: false

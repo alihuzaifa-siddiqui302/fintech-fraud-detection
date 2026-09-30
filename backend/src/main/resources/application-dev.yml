@@ -1,0 +1,90 @@
+# ==============================================================================
+# FraudGuard — LOCAL DEVELOPMENT PROFILE
+# Active when: spring.profiles.active=dev (default)
+# Infrastructure: Local Docker containers (postgres, redis, kafka via docker-compose)
+# ==============================================================================
+
+spring:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL — Local Docker container
+  # ----------------------------------------------------------------------------
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/fraudguard_db?stringtype=unspecified
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  # ----------------------------------------------------------------------------
+  # Redis — Local Docker container (no TLS)
+  # ----------------------------------------------------------------------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          min-idle: 2
+
+  # ----------------------------------------------------------------------------
+  # Kafka — Local Docker container (PLAINTEXT, no auth)
+  # ----------------------------------------------------------------------------
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    admin:
+      fail-fast: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        compression.type: snappy
+    consumer:
+      group-id: fraudguard-main
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  # ----------------------------------------------------------------------------
+  # Mailtrap sandbox for 3DS OTP email testing
+  # ----------------------------------------------------------------------------
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+# ------------------------------------------------------------------------------
+# FraudGuard Dev-specific overrides
+# ------------------------------------------------------------------------------
+fraudguard:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-insecure-jwt-secret-do-not-use-in-prod!}
+    expiry-ms: 86400000
+  external:
+    ipqualityscore:
+      api-key: ${IPQS_API_KEY:}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-2.0-flash}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  otp:
+    enabled: ${OTP_ENABLED:true}
+
+# ------------------------------------------------------------------------------
+# Dev Logging — verbose SQL and evaluation output
+# ------------------------------------------------------------------------------
+logging:
+  level:
+    com.fraudguard: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE

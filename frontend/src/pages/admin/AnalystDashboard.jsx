@@ -103,7 +103,7 @@ export const AnalystDashboard = () => {
     if (!token) return;
 
     abortControllerRef.current = new AbortController();
-    const streamUrl = `${apiClient.defaults.baseURL || 'http://localhost:8080'}/api/v1/analyst/dashboard/stream`;
+    const streamUrl = `${apiClient.defaults.baseURL || import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/analyst/dashboard/stream`;
 
     const startStream = async () => {
       try {

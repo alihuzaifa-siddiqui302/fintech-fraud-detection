@@ -1,0 +1,125 @@
+# ==============================================================================
+# FraudGuard — PRODUCTION PROFILE
+# Active when: SPRING_PROFILES_ACTIVE=prod (set in Render / cloud env)
+# Infrastructure: Managed cloud free tiers (Neon PG, Upstash Redis, Upstash Kafka)
+# ==============================================================================
+
+spring:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL — Neon (free tier, serverless Postgres, requires SSL)
+  # Env var format: postgresql://user:pass@host/dbname?sslmode=require
+  # ----------------------------------------------------------------------------
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 5          # Neon free tier connection limit
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  # ----------------------------------------------------------------------------
+  # Redis — Upstash (free tier, TLS required)
+  # Env var format: rediss://default:token@host:port
+  # ----------------------------------------------------------------------------
+  data:
+    redis:
+      url: ${REDIS_URL}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:true}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 4
+          min-idle: 1
+
+  # ----------------------------------------------------------------------------
+  # Kafka — Upstash (free tier, SASL_SSL + SCRAM-SHA-256)
+  # ----------------------------------------------------------------------------
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    admin:
+      fail-fast: false
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
+      sasl.jaas.config: >
+        org.apache.kafka.common.security.scram.ScramLoginModule required
+        username="${KAFKA_KEY}"
+        password="${KAFKA_SECRET}";
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        compression.type: snappy
+        security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+        sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
+        sasl.jaas.config: >
+          org.apache.kafka.common.security.scram.ScramLoginModule required
+          username="${KAFKA_KEY}"
+          password="${KAFKA_SECRET}";
+    consumer:
+      group-id: fraudguard-prod
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+        sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
+        sasl.jaas.config: >
+          org.apache.kafka.common.security.scram.ScramLoginModule required
+          username="${KAFKA_KEY}"
+          password="${KAFKA_SECRET}";
+
+  # ----------------------------------------------------------------------------
+  # Email — Production SMTP (no fallback values)
+  # ----------------------------------------------------------------------------
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+
+# ------------------------------------------------------------------------------
+# FraudGuard Production overrides — no default fallback for secrets
+# ------------------------------------------------------------------------------
+fraudguard:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiry-ms: ${JWT_EXPIRY_MS:86400000}
+  external:
+    ipqualityscore:
+      api-key: ${IPQS_API_KEY:}
+      timeout-ms: 4000
+      cache-ttl-hours: 6
+    gemini:
+      api-key: ${GEMINI_API_KEY}
+      model: ${GEMINI_MODEL:gemini-2.0-flash}
+      timeout-ms: 30000
+  cors:
+    allowed-origins: ${CORS_ORIGINS}
+  otp:
+    enabled: ${OTP_ENABLED:true}
+    expiry-minutes: 5
+    max-attempts: 3
+
+# ------------------------------------------------------------------------------
+# Production Logging — minimal output, no SQL tracing
+# ------------------------------------------------------------------------------
+logging:
+  level:
+    com.fraudguard: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.apache.kafka: WARN
