@@ -83,9 +83,9 @@ public class SarPromptBuilder {
         }
 
         return """
-You are a Bank Secrecy Act compliance officer at a regulated financial institution. Generate a formal Suspicious Activity Report (SAR) narrative following FinCEN SAR filing guidelines (31 CFR 1020.320).
+You are a Bank Secrecy Act compliance officer at a regulated financial institution. Generate a concise, high-impact Suspicious Activity Report (SAR) narrative following FinCEN SAR filing guidelines (31 CFR 1020.320).
 
-Write ONLY the narrative text — no headers, no bullet points, no markdown formatting, no labels. Write continuous professional prose in exactly 4 paragraphs. Use past tense. Be specific with dates, amounts, and technical indicators. This narrative will be submitted to FinCEN.
+Provide the report as EXACTLY 5 to 6 concise, factual bullet points. Keep each point direct, professional, and dense with facts -- no fluff, no introductory greetings, no concluding remarks.
 
 TRANSACTION FACTS:
 Transaction ID: %s
@@ -125,11 +125,14 @@ Rules Triggered (%d):
 Analyst Review:
 %s
 
-INSTRUCTIONS FOR THE 4 PARAGRAPHS:
-Paragraph 1 (Subject & Account): Describe the account holder, account age, and account activity context.
-Paragraph 2 (Suspicious Activity): Describe the specific transaction, all network indicators (VPN, Tor, IP intelligence), and biometric anomalies in factual detail.
-Paragraph 3 (Pattern & Rules): Describe the risk signals that triggered the fraud detection system, referencing each rule violation and its significance.
-Paragraph 4 (Conclusion & Action): Summarize why this activity is suspicious under BSA/AML guidelines and state the recommended regulatory action.
+FORMAT REQUIREMENTS:
+- Provide exactly 5 to 6 concise bullet points (using - or •).
+- Point 1: Subject & Account Identity (Name, account age, home country).
+- Point 2: Transaction Event (Amount, date/time UTC, transaction ID).
+- Point 3: Network & IP Telemetry (IP, geolocation, ISP, VPN/Tor/proxy detection).
+- Point 4: Device & Biometric Posture (Device fingerprint, OS/browser, page dwell time, paste/headless flags).
+- Point 5: Risk Rules & Engine Decision (Risk score, system decision, specific triggered rules and weights).
+- Point 6: Regulatory Rationale & Recommended Action (BSA/AML justification and recommended account/filing actions).
 """.formatted(
                 txn.getId(),
                 filingDate,
