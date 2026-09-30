@@ -84,14 +84,13 @@ spring:
   # Email — Production SMTP (no fallback values)
   # ----------------------------------------------------------------------------
   mail:
-    host: ${MAIL_HOST}
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-      mail.smtp.starttls.required: true
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
 
 # ------------------------------------------------------------------------------
 # FraudGuard Production overrides — no default fallback for secrets
@@ -106,11 +105,11 @@ fraudguard:
       timeout-ms: 4000
       cache-ttl-hours: 6
     gemini:
-      api-key: ${GEMINI_API_KEY}
-      model: ${GEMINI_MODEL:gemini-2.0-flash}
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-flash-latest}
       timeout-ms: 30000
   cors:
-    allowed-origins: ${CORS_ORIGINS}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
   otp:
     enabled: ${OTP_ENABLED:true}
     expiry-minutes: 5
