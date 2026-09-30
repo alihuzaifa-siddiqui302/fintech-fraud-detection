@@ -7,7 +7,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 // Request interceptor: attach token from localStorage ("fg_auth")
@@ -143,7 +143,9 @@ export const getDashboardStreamUrl = () => {
 
 // AI SAR Reports (Gemini 2.0 Flash)
 export const generateSar = async (transactionId) => {
-  const response = await apiClient.post(`/api/v1/analyst/transactions/${transactionId}/sar`);
+  const response = await apiClient.post(`/api/v1/analyst/transactions/${transactionId}/sar`, null, {
+    timeout: 60000,
+  });
   return response.data;
 };
 
