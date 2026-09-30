@@ -33,16 +33,20 @@ EXPOSE 8080 10000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-8080}/actuator/health || exit 1
 
-# Production JVM flags — tuned for 512 MB RAM free-tier containers
-# -Xmx384m     : hard heap ceiling (leaves ~128 MB for OS + Metaspace)
-# -Xms128m     : start small, let JVM grow on demand
-# -XX:+UseG1GC : low-latency GC suitable for API workloads
-# -XX:MaxMetaspaceSize=128m : cap Metaspace to prevent unbounded growth
+# Production JVM flags — strictly constrained to stay safely under Render's 512 MB ceiling
+# -Xmx256m                     : Max heap allocation
+# -Xms128m                     : Initial heap allocation
+# -Xss512k                     : Halves thread stack overhead
+# -XX:+UseSerialGC             : Low-overhead GC saving ~50-80MB of G1GC native memory
+# -XX:MaxMetaspaceSize=96m     : Caps class metadata
+# -XX:ReservedCodeCacheSize=48m: Caps JIT compiled code cache
 ENTRYPOINT ["java", \
-  "-Xmx384m", \
-  "-Xms256m", \
-  "-XX:+UseG1GC", \
-  "-XX:MaxMetaspaceSize=128m", \
+  "-Xmx256m", \
+  "-Xms128m", \
+  "-Xss512k", \
+  "-XX:+UseSerialGC", \
+  "-XX:MaxMetaspaceSize=96m", \
+  "-XX:ReservedCodeCacheSize=48m", \
   "-XX:+UseContainerSupport", \
   "-Djava.security.egd=file:/dev/./urandom", \
   "-jar", "app.jar"]

@@ -4,6 +4,12 @@
 # Infrastructure: Managed cloud free tiers (Neon PG, Upstash Redis, Upstash Kafka)
 # ==============================================================================
 
+server:
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 2
+
 spring:
   # ----------------------------------------------------------------------------
   # PostgreSQL — Neon (free tier, serverless Postgres, requires SSL)
