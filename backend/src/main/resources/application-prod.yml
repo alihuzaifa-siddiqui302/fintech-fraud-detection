@@ -37,19 +37,21 @@ spring:
           min-idle: 1
 
   # ----------------------------------------------------------------------------
-  # Kafka — Upstash (free tier, SASL_SSL + SCRAM-SHA-256)
+  # Kafka — Cloud Managed (Optional, SASL_SSL + SCRAM-SHA-256)
   # ----------------------------------------------------------------------------
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     admin:
       fail-fast: false
+    listener:
+      auto-startup: ${KAFKA_AUTO_STARTUP:false}
     properties:
-      security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
       sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
       sasl.jaas.config: >
         org.apache.kafka.common.security.scram.ScramLoginModule required
-        username="${KAFKA_KEY}"
-        password="${KAFKA_SECRET}";
+        username="${KAFKA_KEY:}"
+        password="${KAFKA_SECRET:}";
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -58,12 +60,12 @@ spring:
       properties:
         enable.idempotence: true
         compression.type: snappy
-        security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+        security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
         sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
         sasl.jaas.config: >
           org.apache.kafka.common.security.scram.ScramLoginModule required
-          username="${KAFKA_KEY}"
-          password="${KAFKA_SECRET}";
+          username="${KAFKA_KEY:}"
+          password="${KAFKA_SECRET:}";
     consumer:
       group-id: fraudguard-prod
       auto-offset-reset: earliest
@@ -71,12 +73,12 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
-        security.protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+        security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
         sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
         sasl.jaas.config: >
           org.apache.kafka.common.security.scram.ScramLoginModule required
-          username="${KAFKA_KEY}"
-          password="${KAFKA_SECRET}";
+          username="${KAFKA_KEY:}"
+          password="${KAFKA_SECRET:}";
 
   # ----------------------------------------------------------------------------
   # Email — Production SMTP (no fallback values)
