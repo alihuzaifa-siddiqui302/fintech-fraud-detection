@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   ExternalLink,
   BookOpen,
+  Eye,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -401,17 +402,6 @@ const GuidedTour = ({ tourId, steps = [], onComplete }) => {
               {/* Navigation Tabs */}
               <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
                 <button
-                  onClick={() => setActiveTab('fasttrack')}
-                  className={clsx(
-                    'px-3 py-1 rounded-lg font-medium transition-all',
-                    activeTab === 'fasttrack'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  )}
-                >
-                  🎯 3-Min Demo Script
-                </button>
-                <button
                   onClick={() => setActiveTab('customer')}
                   className={clsx(
                     'px-3 py-1 rounded-lg font-medium transition-all',
@@ -438,74 +428,7 @@ const GuidedTour = ({ tourId, steps = [], onComplete }) => {
 
             {/* Modal Body (Scrollable) */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
-              {/* TAB 1: FAST TRACK DEMO SCRIPT */}
-              {activeTab === 'fasttrack' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-white text-sm">Judges' Recommended 3-Minute Evaluation</h4>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                        Follow these 5 steps to experience the complete end-to-end fraud detection pipeline — from live customer telemetry and attack simulation to real-time analyst adjudication and Gemini AI SAR generation.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center">1</span>
-                        <h5 className="font-semibold text-white text-xs">Simulate Clean Payment (Customer Portal)</h5>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        Open Checkout with amount <span className="text-emerald-400 font-mono">$50.00</span> (all sandbox attack toggles OFF). Click <strong className="text-slate-200">Submit Payment</strong>. Adjudication takes under 100ms and results in an immediate <span className="text-emerald-400 font-bold">APPROVED</span> decision.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">2</span>
-                        <h5 className="font-semibold text-white text-xs">Trigger 3D-Secure OTP Challenge</h5>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        Change the amount to <span className="text-amber-400 font-mono">$2,200.00</span> or toggle <strong className="text-slate-200">Foreign IP</strong> ON. Submit payment. The risk score jumps into the Review band (40–69) and launches an interactive <span className="text-amber-300 font-semibold">3DS OTP Challenge Modal</span> (code is auto-filled for quick testing).
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold flex items-center justify-center">3</span>
-                        <h5 className="font-semibold text-white text-xs">Launch a Velocity Burst Attack</h5>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        Click the amber button <strong className="text-slate-200">"Simulate Velocity Attack (5x Rapid Burst)"</strong>. Five rapid transactions fire within seconds, triggering the <code className="text-rose-300 bg-rose-950/60 px-1 py-0.5 rounded text-[11px]">VELOCITY_CARD_1M</code> rule and blocking subsequent attempts.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold flex items-center justify-center">4</span>
-                        <h5 className="font-semibold text-white text-xs">Investigate & Adjudicate in Analyst Cockpit</h5>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        Switch to <strong className="text-slate-200">Analyst Cockpit</strong>. Transactions stream into the live table in real time via Server-Sent Events (SSE). Click any row to open the <span className="text-indigo-300 font-semibold">Forensic Drawer</span> — see the 20-rule contribution breakdown, sub-scores, and click <strong className="text-indigo-400">"Generate FinCEN SAR"</strong> to watch Google Gemini compile a legal-grade regulatory narrative!
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center">5</span>
-                        <h5 className="font-semibold text-white text-xs">Unmask Organized Fraud in Syndicate Graph</h5>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        Navigate to <strong className="text-slate-200">Syndicate Graph</strong> (`/admin/graph`). The force-directed graph links users sharing the same device fingerprints and IP clusters, visually exposing money-mule rings and botnets. Click any node to inspect blast radius or 1-click blacklist.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: CUSTOMER PORTAL FEATURES */}
+              {/* TAB 1: CUSTOMER PORTAL FEATURES */}
               {activeTab === 'customer' && (
                 <div className="space-y-4">
                   <h4 className="text-xs uppercase font-bold tracking-wider text-indigo-400">
