@@ -179,16 +179,27 @@ public class CheckoutService {
         // 10. Asynchronously publish transaction evaluation event to Kafka
         publishKafkaEvent(savedTxn, evalResult);
 
-        // 11. Risk-band routing for PENDING_REVIEW (risk score 50–70):
+        // 11. Risk-band routing:
+        //   Score 0–29: Direct APPROVED, no OTP, no analyst review queue
+        //   Score 30–50: APPROVED with 3DS OTP challenge (self-service; NO pending review queue)
+        //   Score 51–70: PENDING_REVIEW with 3DS OTP challenge AND broadcast to Analyst Cockpit
+        //   Score > 70: Instant BLOCKED
         final int score = evalResult.getTotalScore();
         final boolean isPending = AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(savedTxn.getStatus());
+        final boolean isOtpOnly = score > AppConstants.DecisionThreshold.APPROVED_MAX
+                && score <= AppConstants.DecisionThreshold.OTP_ONLY_MAX;
+        final boolean requiresOtp = (isPending || isOtpOnly) && otpEnabled;
 
         if (isPending) {
-            // Score 50-70: broadcast to analyst queue for human oversight in Analyst Cockpit
-            log.info("Transaction [{}] score={} — PENDING_REVIEW (50–70). Notifying analyst cockpit queue.",
+            // Score 51-70: broadcast to analyst queue for human oversight in Analyst Cockpit
+            log.info("Transaction [{}] score={} — PENDING_REVIEW (51–70). Notifying analyst cockpit queue.",
                     savedTxn.getId(), score);
             AnalystTransactionDto analystDto = mapperService.toAnalystDto(savedTxn, savedHits, null, sessionSignal);
             dashboardStreamService.broadcastPendingTransaction(analystDto);
+        } else if (isOtpOnly) {
+            // Score 30-50: OTP step-up challenge only — self-service, no analyst queue
+            log.info("Transaction [{}] score={} — OTP step-up only (30–50). Skipping analyst review queue.",
+                    savedTxn.getId(), score);
         }
 
         // 12. Resolve visual status color and message
@@ -214,10 +225,10 @@ public class CheckoutService {
 
         OffsetDateTime timestamp = savedTxn.getCreatedAt() != null ? savedTxn.getCreatedAt() : OffsetDateTime.now();
 
-        // 13. If PENDING_REVIEW (score 50–70) and 3DS OTP step-up is enabled, trigger challenge
-        if (isPending && otpEnabled) {
-            log.info("Transaction [{}] score={} — issuing 3DS OTP challenge (50–70 band).",
-                    savedTxn.getId(), score);
+        // 13. If OTP step-up is enabled and required (score 30–50 or 51–70), trigger challenge
+        if (requiresOtp) {
+            log.info("Transaction [{}] score={} — issuing 3DS OTP challenge (band: {}).",
+                    savedTxn.getId(), score, isPending ? "PENDING_REVIEW (51–70)" : "OTP_ONLY (30–50)");
             OtpChallengeDto otpChallenge = otpService.issueChallenge(savedTxn.getId(), user.getEmail());
 
             return new CheckoutResponse(
@@ -225,7 +236,9 @@ public class CheckoutService {
                     "OTP_REQUIRED",
                     score,
                     "blue",
-                    "Verification required. Your transaction is under review by our security team.",
+                    isPending
+                        ? "Verification required. Your transaction is under review by our security team."
+                        : "Verification required. We've sent a 6-digit verification code to your email.",
                     ruleHitDtos,
                     evalResult.getAllResults().size(),
                     timestamp,

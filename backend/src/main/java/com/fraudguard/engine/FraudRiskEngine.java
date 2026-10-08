@@ -424,11 +424,14 @@ public class FraudRiskEngine {
         int clampedScore = Math.min(100, Math.max(0, accumulatedPoints));
 
         String status;
-        if (clampedScore <= AppConstants.DecisionThreshold.APPROVED_MAX) {
+        if (clampedScore <= AppConstants.DecisionThreshold.OTP_ONLY_MAX) {
+            // Scores 0–29: direct approval. Scores 30–50: self-service approval with OTP (no PENDING_REVIEW).
             status = AppConstants.TransactionStatus.APPROVED;
         } else if (clampedScore <= AppConstants.DecisionThreshold.PENDING_MAX) {
+            // Scores 51–70: elevated risk held for compliance analyst adjudication (PENDING_REVIEW).
             status = AppConstants.TransactionStatus.PENDING_REVIEW;
         } else {
+            // Scores > 70: excessive risk automated block.
             status = AppConstants.TransactionStatus.BLOCKED;
         }
 

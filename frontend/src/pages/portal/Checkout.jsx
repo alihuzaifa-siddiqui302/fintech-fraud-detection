@@ -404,7 +404,8 @@ export const Checkout = () => {
             'rounded-2xl border p-6 transition-all duration-300 shadow-2xl',
             result.status === 'APPROVED' && 'bg-emerald-950/20 border-emerald-500/40',
             result.status === 'PENDING_REVIEW' && 'bg-amber-950/20 border-amber-500/40',
-            result.status === 'BLOCKED' && 'bg-red-950/20 border-red-500/40'
+            result.status === 'BLOCKED' && 'bg-red-950/20 border-red-500/40',
+            result.status === 'OTP_REQUIRED' && 'bg-indigo-950/20 border-indigo-500/40'
           )}
         >
           {/* Header Row */}

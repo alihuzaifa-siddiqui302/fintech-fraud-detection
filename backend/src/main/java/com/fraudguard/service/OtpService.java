@@ -74,9 +74,13 @@ public class OtpService {
         Transaction txn = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found: " + transactionId));
 
-        if (!AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(txn.getStatus())) {
+        if (AppConstants.TransactionStatus.BLOCKED.equalsIgnoreCase(txn.getStatus())) {
             log.warn("Cannot issue OTP challenge for transaction [{}] with status [{}]", transactionId, txn.getStatus());
-            throw new ApiException("Transaction is not in PENDING_REVIEW status: " + txn.getStatus(), HttpStatus.BAD_REQUEST);
+            throw new ApiException("Cannot issue OTP challenge for a blocked transaction", HttpStatus.BAD_REQUEST);
+        }
+        if ("OTP_VERIFIED".equalsIgnoreCase(txn.getOtpStatus())) {
+            log.warn("Transaction [{}] is already verified", transactionId);
+            throw new ApiException("Transaction has already been verified", HttpStatus.BAD_REQUEST);
         }
 
         User user = userRepository.findById(txn.getUserId())
@@ -246,7 +250,7 @@ public class OtpService {
         String message;
 
         if (isPendingReviewBand) {
-            // High-risk band (score 50–70): Customer verified identity via OTP, but risk score is elevated (50–70).
+            // High-risk band (score 51–70): Customer verified identity via OTP, but risk score is elevated (51–70).
             // Retain in PENDING_REVIEW for human analyst adjudication in Analyst Cockpit!
             finalStatus = AppConstants.TransactionStatus.PENDING_REVIEW;
             txn.setStatus(finalStatus);
@@ -254,12 +258,12 @@ public class OtpService {
             message = "Identity verified via 3DS OTP. Held for compliance review due to elevated risk score (" + score + ").";
             log.info("3DS OTP verified for high-risk txn [{}] score={} — retained in PENDING_REVIEW for analyst queue", transactionId, score);
         } else {
-            // Low-risk band (score < 50): Customer verified -> auto APPROVED
+            // Self-service band (score 30–50): Customer verified -> auto APPROVED, no pending review
             finalStatus = AppConstants.TransactionStatus.APPROVED;
             txn.setStatus(finalStatus);
             txn.setResolutionNotes("Approved automatically following successful 3DS SMS OTP challenge completion");
             message = "Payment successfully verified and approved.";
-            log.info("3DS OTP verified for low-risk txn [{}] score={} — transaction APPROVED", transactionId, score);
+            log.info("3DS OTP verified for self-service txn [{}] score={} — transaction APPROVED", transactionId, score);
         }
 
         otpChallengeRepository.save(challenge);
@@ -360,7 +364,8 @@ public class OtpService {
         for (OtpChallenge challenge : expiredChallenges) {
             challenge.setStatus("EXPIRED");
             transactionRepository.findById(challenge.getTransactionId()).ifPresent(txn -> {
-                if (AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(txn.getStatus())) {
+                if (AppConstants.TransactionStatus.PENDING_REVIEW.equalsIgnoreCase(txn.getStatus())
+                        || "AWAITING_OTP".equalsIgnoreCase(txn.getOtpStatus())) {
                     txn.setStatus(AppConstants.TransactionStatus.BLOCKED);
                     txn.setOtpStatus("OTP_EXPIRED");
                     txn.setResolutionNotes("System automated block: 3DS OTP verification window expired.");

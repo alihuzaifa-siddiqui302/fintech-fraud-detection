@@ -122,11 +122,13 @@ public final class AppConstants {
     public static final class DecisionThreshold {
         private DecisionThreshold() {}
 
-        /** Upper bound for auto-approval without step-up challenge (0–49). */
-        public static final int APPROVED_MAX = 49;
-        /** Lower bound for OTP challenge + Analyst Cockpit review queue. */
-        public static final int PENDING_MIN   = 50;
-        /** Upper bound for OTP challenge + Analyst Cockpit review queue (50–70). Scores > 70 are BLOCKED. */
+        /** Upper bound for auto-approval without step-up challenge (0–29). */
+        public static final int APPROVED_MAX = 29;
+        /** Upper bound for OTP-only self-service challenge (30–50). Customer challenged, no pending review / analyst queue. */
+        public static final int OTP_ONLY_MAX  = 50;
+        /** Lower bound for high-risk PENDING_REVIEW (51–70). Customer challenged AND analyst queue notified. */
+        public static final int PENDING_MIN   = 51;
+        /** Upper bound for high-risk PENDING_REVIEW (51–70). Scores > 70 are BLOCKED. */
         public static final int PENDING_MAX   = 70;
     }
 }
