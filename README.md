@@ -15,22 +15,45 @@
 
 ---
 
+> 🌐 **Live Cloud Deployment (Recommended)**: **[https://fraudguard26.vercel.app](https://fraudguard26.vercel.app)**  
+> ⚡ **Zero-Setup Evaluator Access**: Click **"Customer Portal"** or **"Analyst Cockpit"** on the login screen for instant 1-click evaluation. No local installation or Docker required!
+
+---
+
 ## 📌 Table of Contents
+- [🌐 Live Cloud Access (Instant Evaluation)](#-live-cloud-access-instant-evaluation)
 - [1. Overview](#1-overview)
 - [2. System Architecture](#2-system-architecture)
 - [3. Key Platform Capabilities](#3-key-platform-capabilities)
-- [4. How to Clone & Run Locally](#4-how-to-clone--run-locally)
-- [5. Demo Credentials & User Roles](#5-demo-credentials--user-roles)
-- [6. Interactive Feature Walkthrough](#6-interactive-feature-walkthrough)
+- [4. Demo Credentials & User Roles](#4-demo-credentials--user-roles)
+- [5. Interactive Feature Walkthrough](#5-interactive-feature-walkthrough)
   - [Customer Checkout & Sandbox Simulator](#customer-checkout--sandbox-simulator)
   - [3D-Secure Adaptive Step-Up OTP](#3d-secure-adaptive-step-up-otp)
   - [Analyst Cockpit & Live Queue](#analyst-cockpit--live-queue)
   - [Interactive Fraud Syndicate Link Graph](#interactive-fraud-syndicate-link-graph)
   - [Automated FinCEN AI SAR Generator](#automated-fincen-ai-sar-generator)
-- [7. Fraud Scoring Engine (20 Rules)](#7-fraud-scoring-engine-20-rules)
+- [6. Fraud Scoring Engine (20 Rules)](#6-fraud-scoring-engine-20-rules)
+- [7. How to Clone & Run Locally (Developer Setup)](#7-how-to-clone--run-locally-developer-setup)
 - [8. API Reference](#8-api-reference)
 - [9. Tech Stack & Directory Structure](#9-tech-stack--directory-structure)
 - [10. Troubleshooting](#10-troubleshooting)
+
+---
+
+## 🌐 Live Cloud Access (Instant Evaluation)
+
+For evaluators, hackathon judges, and code reviewers, the entire FraudGuard platform is deployed live on Vercel with zero installation required:
+
+| Platform Interface | Primary Live URL (Vercel) | Secondary Local URL | Key Features & Evaluation Flow |
+| :--- | :--- | :--- | :--- |
+| 🛍️ **Customer Portal & Checkout** | **[https://fraudguard26.vercel.app/portal/checkout](https://fraudguard26.vercel.app/portal/checkout)** | `http://localhost:5173/portal/checkout` | Live checkout sandbox, 20 client biometrics, QA attack toggles (VPN, Bot, Velocity), and 3DS OTP step-up modal |
+| 🛡️ **Analyst Cockpit & Live Triage** | **[https://fraudguard26.vercel.app/admin/dashboard](https://fraudguard26.vercel.app/admin/dashboard)** | `http://localhost:5173/admin/dashboard` | Real-time queue, 20-rule scoring breakdown, forensic drawer, manual approve/block, blacklists |
+| 🕸️ **Fraud Syndicate Link Graph** | **[https://fraudguard26.vercel.app/admin/graph](https://fraudguard26.vercel.app/admin/graph)** | `http://localhost:5173/admin/graph` | Force-directed Cytoscape network uncovering shared devices, IPs, and multi-user fraud rings |
+| 🤖 **Interactive Evaluator Guide** | **Bottom-right widget on any page** | Same | Automated step-by-step tour explaining every capability on screen |
+| 🔌 **Backend REST API** | *(Cloud Backend)* | `http://localhost:8080` | Spring Boot 3.2.5 REST services & OpenAPI docs |
+| 🩺 **Actuator Health Check** | *(Cloud Backend)* | `http://localhost:8080/actuator/health` | Real-time status of PostgreSQL, Redis, and Kafka |
+
+> 💡 **Quick Login Tip**: You do not need to memorize passwords. On the login page, simply click the **"Customer Portal"** or **"Analyst Cockpit"** demo cards to log in instantly.
 
 ---
 
@@ -146,17 +169,19 @@ docker compose -f docker-compose.prod.yml up --build -d
 
 ---
 
-### Step 4: Access the Application
+### Step 4: Access the Application (Local Development)
 
-Once the containers start up, access the platform in your browser:
+If running the stack locally via Docker Compose, access the local instances in your browser:
 
-| Application Interface | URL | Purpose |
-| :--- | :--- | :--- |
-| 🛍️ **Customer Portal & Simulator** | [http://localhost:5173/portal/checkout](http://localhost:5173/portal/checkout) | Test payment checkouts, simulate attack vectors, trigger OTP challenges |
-| 🛡️ **Analyst Cockpit & Live Triage** | [http://localhost:5173/admin/dashboard](http://localhost:5173/admin/dashboard) | Live queue of flagged transactions, rule config, blacklists |
-| 🕸️ **Fraud Syndicate Link Graph** | [http://localhost:5173/admin/graph](http://localhost:5173/admin/graph) | Visual network graph showing shared entities and fraud rings |
-| 🔌 **Backend REST API** | [http://localhost:8080](http://localhost:8080) | Core Spring Boot REST API |
-| 🩺 **Actuator Health Check** | [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) | Real-time health status of database, Redis, and Kafka |
+| Application Interface | Local Developer URL | Primary Live URL (Vercel) | Purpose |
+| :--- | :--- | :--- | :--- |
+| 🛍️ **Customer Portal & Simulator** | `http://localhost:5173/portal/checkout` | **[https://fraudguard26.vercel.app/portal/checkout](https://fraudguard26.vercel.app/portal/checkout)** | Test payment checkouts, simulate attack vectors, trigger OTP challenges |
+| 🛡️ **Analyst Cockpit & Live Triage** | `http://localhost:5173/admin/dashboard` | **[https://fraudguard26.vercel.app/admin/dashboard](https://fraudguard26.vercel.app/admin/dashboard)** | Live queue of flagged transactions, rule config, blacklists |
+| 🕸️ **Fraud Syndicate Link Graph** | `http://localhost:5173/admin/graph` | **[https://fraudguard26.vercel.app/admin/graph](https://fraudguard26.vercel.app/admin/graph)** | Visual network graph showing shared entities and fraud rings |
+| 🔌 **Backend REST API** | `http://localhost:8080` | *(Cloud Backend)* | Core Spring Boot REST API |
+| 🩺 **Actuator Health Check** | `http://localhost:8080/actuator/health` | *(Cloud Backend)* | Real-time health status of database, Redis, and Kafka |
+
+> 💡 *Note: If you do not wish to run Docker containers locally, visit the live production deployment at **[https://fraudguard26.vercel.app](https://fraudguard26.vercel.app)**.*
 
 To stop the containers at any time:
 ```bash
@@ -221,7 +246,7 @@ The database is pre-seeded with two specialized roles:
 ## 6. Interactive Feature Walkthrough
 
 ### Customer Checkout & Sandbox Simulator
-Visit `/portal/checkout` while logged in as `customer@fraudguard.io`.
+Visit **[/portal/checkout](https://fraudguard26.vercel.app/portal/checkout)** while logged in as `customer@fraudguard.io` (or via 1-click Demo Card).
 - Enter any transaction amount (e.g. `$150.00`).
 - The simulator captures **20 behavioral client signals** (keystroke dynamics, mouse activity, canvas device fingerprint, browser timezone).
 - **QA Attack Toggles**:
@@ -237,7 +262,7 @@ Visit `/portal/checkout` while logged in as `customer@fraudguard.io`.
 - A 3DS authentication modal appears on the checkout page. The user can enter the one-time code (or use the sandbox autofill) to safely verify their identity and approve the transaction.
 
 ### Analyst Cockpit & Live Queue
-Visit `/admin/dashboard` while logged in as `analyst@fraudguard.io`.
+Visit **[/admin/dashboard](https://fraudguard26.vercel.app/admin/dashboard)** while logged in as `analyst@fraudguard.io` (or via 1-click Demo Card).
 - View real-time transactions streaming over **Server-Sent Events (SSE)**.
 - Filter by status (`APPROVED`, `PENDING_REVIEW`, `BLOCKED`).
 - Click any transaction to open the **Forensic Inspection Drawer**, showing:
@@ -247,7 +272,7 @@ Visit `/admin/dashboard` while logged in as `analyst@fraudguard.io`.
   - One-click manual adjudication (**Approve** / **Block**) and blacklisting
 
 ### Interactive Fraud Syndicate Link Graph
-Navigate to `/admin/graph`:
+Navigate to **[/admin/graph](https://fraudguard26.vercel.app/admin/graph)**:
 - An interactive network visualization built with **Cytoscape.js**.
 - **Nodes**:
   - 👤 **Users** (Blue circles)

@@ -41,7 +41,7 @@ All sensitive credentials and connection strings are parameterized via environme
 | `MAIL_USERNAME` | Both | SMTP username or email | Mailtrap account / Gmail address |
 | `MAIL_PASSWORD` | Both | SMTP password or Google App Password | Mailtrap account / Google App Password |
 | `OTP_ENABLED` | Both | `true` or `false` (default: `true`) | Feature flag for 3DS verification |
-| `CORS_ORIGINS` | Both | `http://localhost:5173,https://your-app.vercel.app` | Comma-delimited allowed frontend URLs |
+| `CORS_ORIGINS` | Both | `http://localhost:5173,https://fraudguard26.vercel.app` | Comma-delimited allowed frontend URLs |
 | `VITE_API_URL` | Frontend | `http://localhost:8080` or `https://backend.onrender.com` | Base backend API URL |
 
 ---
@@ -145,7 +145,7 @@ Render provides a free Web Service container tier with 512 MB RAM.
    - `KAFKA_SECRET`: Upstash Kafka Secret
    - `GEMINI_API_KEY`: Your Google AI Studio API key
    - `JWT_SECRET`: Random 256-bit string (or let Render auto-generate)
-   - `CORS_ORIGINS`: Your Vercel frontend URL (e.g. `https://fraudguard.vercel.app`)
+   - `CORS_ORIGINS`: Your Vercel frontend URL (e.g. `https://fraudguard26.vercel.app`)
 6. Deploy! Render will build the multi-stage Dockerfile and health check via `/actuator/health`.
 7. Copy your deployed backend URL: `https://fraudguard-backend.onrender.com`.
 
@@ -176,7 +176,7 @@ After deployment, verify the platform health:
    # Expected response: {"status":"UP"}
    ```
 2. **Customer Portal Login:**
-   - Navigate to your Vercel URL: `https://your-frontend.vercel.app/portal/login`
+   - Navigate to your Vercel URL: `https://fraudguard26.vercel.app/portal/login`
    - Sign in with demo credentials: `customer@fraudguard.io` / `demo1234`
    - Perform a checkout transaction and test the 3DS step-up verification.
 3. **Analyst Dashboard Stream:**

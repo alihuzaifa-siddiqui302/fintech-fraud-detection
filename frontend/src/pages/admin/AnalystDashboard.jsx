@@ -140,6 +140,21 @@ export const AnalystDashboard = () => {
     abortControllerRef.current = new AbortController();
     const streamUrl = `${apiClient.defaults.baseURL || import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/analyst/dashboard/stream`;
 
+    const isMixedContent = typeof window !== 'undefined' && window.location.protocol === 'https:' && streamUrl.startsWith('http://');
+    if (isMixedContent) {
+      // Avoid browser mixed-content console error; listen to storage and cross-window events
+      const handleStorageUpdate = () => {
+        stateRef.current.fetchTxnsData(stateRef.current.page, stateRef.current.statusFilter, stateRef.current.searchTerm);
+        stateRef.current.fetchMetricsData();
+      };
+      window.addEventListener('storage', handleStorageUpdate);
+      window.addEventListener('fraudguard:transactions-updated', handleStorageUpdate);
+      return () => {
+        window.removeEventListener('storage', handleStorageUpdate);
+        window.removeEventListener('fraudguard:transactions-updated', handleStorageUpdate);
+      };
+    }
+
     const startStream = async () => {
       try {
         const response = await fetch(streamUrl, {
