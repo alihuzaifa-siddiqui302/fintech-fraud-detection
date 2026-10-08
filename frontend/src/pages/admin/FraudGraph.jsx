@@ -36,7 +36,31 @@ import {
 import { getGraph, addBlacklist } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
 import CountryFlag from '../../components/CountryFlag';
+import GuidedTour from '../../components/GuidedTour';
 import clsx from 'clsx';
+
+const GRAPH_TOUR_STEPS = [
+  {
+    target: '[data-tour="graph-header"]',
+    title: 'Fraud Syndicate Link Analysis',
+    description: 'This interactive graph correlates shared device fingerprints, IP clusters, and synthetic identities across transactions to expose organized fraud rings and botnets.',
+  },
+  {
+    target: '[data-tour="graph-stats"]',
+    title: 'Graph Intelligence Metrics',
+    description: 'Shows live node counts (Users, IPs, Devices) and relationships (shared device connections, shared IP connections, blacklisted and high-risk entities).',
+  },
+  {
+    target: '[data-tour="graph-controls"]',
+    title: 'Graph Controls & Focus',
+    description: 'Zoom, center, fit to screen, and instantly highlight high-risk fraud actors in the network with a single click.',
+  },
+  {
+    target: '[data-tour="graph-canvas"]',
+    title: 'Cytoscape Network Topology',
+    description: 'A hardware-accelerated force-directed graph (Cola layout). Drag nodes, zoom in/out, or click any node to inspect its fraud dossier, blast radius, and 1-click blacklist options.',
+  },
+];
 
 // Register cola layout plugin with cytoscape once
 if (!cytoscape.prototype._colaRegistered) {
@@ -711,8 +735,11 @@ export const FraudGraph = () => {
           : 'flex-1 h-full w-full min-h-0 p-1 sm:p-2'
       )}
     >
+      {/* Guided Tour for Syndicate Graph */}
+      <GuidedTour tourId="graph" steps={GRAPH_TOUR_STEPS} />
+
       {/* COMPACT CYBER SOC HEADER & STATS BAR */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 mb-2 backdrop-blur-md shadow-2xl flex-shrink-0 relative overflow-hidden">
+      <div data-tour="graph-header" className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 mb-2 backdrop-blur-md shadow-2xl flex-shrink-0 relative overflow-hidden">
         {/* Neon accent cyber line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-90" />
 
@@ -739,7 +766,7 @@ export const FraudGraph = () => {
           </div>
 
           {/* Center: Live Stats Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <div data-tour="graph-stats" className="flex flex-wrap items-center gap-1.5 text-xs">
             <div className="px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 flex items-center gap-1.5 font-medium shadow-sm">
               <span className="w-2 h-2 rounded-full bg-indigo-400" />
               <span className="font-bold text-white">{stats.totalNodes}</span> nodes
@@ -912,12 +939,12 @@ export const FraudGraph = () => {
       </div>
 
       {/* FULL-BLEED GRAPH CANVAS CONTAINER */}
-      <div className="flex-1 relative w-full h-full min-h-0 bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]">
+      <div data-tour="graph-canvas" className="flex-1 relative w-full h-full min-h-0 bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]">
         {/* Subtle cyber background ambient vignette */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/60 pointer-events-none z-0" />
 
         {/* FLOATING TOP COMMAND HUD BAR: ZOOM, CENTER, LAYOUTS & QUICK SEARCH */}
-        <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div data-tour="graph-controls" className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
           {/* Left HUD: Zoom, Center & Focus High Risk */}
           <div className="flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-xl p-1 backdrop-blur-xl shadow-2xl pointer-events-auto">
             <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Shield, ShoppingBag, History, LogOut } from 'lucide-react';
+import { Shield, ShoppingBag, History, LogOut, Bot, Sparkles } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import clsx from 'clsx';
@@ -75,6 +75,22 @@ export const CustomerPortal = () => {
               );
             })}
           </nav>
+
+          {/* Evaluator & Feature Guide Button */}
+          <div className="px-4 pb-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('fraudguard:open-guide'))}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/10 via-brand-500/10 to-indigo-500/10 hover:from-indigo-500/20 hover:to-brand-500/20 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold transition-all group shadow-sm"
+              title="Open Feature Guide & Platform Tour"
+            >
+              <div className="p-1 rounded-lg bg-indigo-500/20 text-indigo-300 group-hover:scale-110 transition-transform">
+                <Bot className="w-3.5 h-3.5" />
+              </div>
+              <span className="flex-1 text-left">Feature Guide & Tour</span>
+              <Sparkles className="w-3 h-3 text-indigo-400 opacity-70 group-hover:opacity-100" />
+            </button>
+          </div>
         </div>
 
         {/* User Card & Logout */}

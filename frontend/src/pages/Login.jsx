@@ -206,42 +206,59 @@ export const Login = () => {
             </button>
           </form>
 
-          {/* Quick Access Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-900 px-3 text-slate-500 font-semibold tracking-wider">
-                — Quick access —
-              </span>
+          {/* ── Demo Guide Banner for Evaluators ── */}
+          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-indigo-950/80 via-slate-800/60 to-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-950/40 relative overflow-hidden">
+            {/* Subtle glow */}
+            <div className="absolute -top-8 -right-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="text-lg">🎯</span>
+                <h3 className="text-sm font-bold text-white tracking-tight">Demo Access — Start Here</h3>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                Click one of the buttons below to instantly log in and explore the platform — <span className="text-indigo-300 font-medium">no credentials needed</span>.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickLogin('customer@fraudguard.io', 'demo1234')}
+                  className="group flex flex-col items-start gap-1 p-3 rounded-xl border border-indigo-500/40 bg-indigo-500/5 hover:bg-indigo-500/15 text-left transition-all duration-150 disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🛒</span>
+                    <span className="text-xs font-semibold text-indigo-200 group-hover:text-white transition-colors">Customer Portal</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-snug pl-6">
+                    Simulate payments, trigger fraud signals, and experience 3D-Secure OTP challenges.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickLogin('analyst@fraudguard.io', 'demo1234')}
+                  className="group flex flex-col items-start gap-1 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/15 text-left transition-all duration-150 disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🔍</span>
+                    <span className="text-xs font-semibold text-emerald-200 group-hover:text-white transition-colors">Analyst Cockpit</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-snug pl-6">
+                    Live fraud triage, syndicate link graph, AI SAR reports, and rule tuning.
+                  </p>
+                </button>
+              </div>
+
+              <p className="text-[10px] text-slate-500 italic">
+                💡 Tip: Start with <span className="text-indigo-400 not-italic font-medium">Customer Portal</span> to submit test transactions, then switch to <span className="text-emerald-400 not-italic font-medium">Analyst Cockpit</span> to investigate them in real time.
+              </p>
             </div>
           </div>
 
-          {/* Demo Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin('customer@fraudguard.io', 'demo1234')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 font-medium text-xs transition-all duration-150 disabled:opacity-50"
-            >
-              <span>🛒</span>
-              <span>Customer Portal</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin('analyst@fraudguard.io', 'demo1234')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-medium text-xs transition-all duration-150 disabled:opacity-50 shadow-sm"
-            >
-              <span>🔍</span>
-              <span>Analyst Cockpit</span>
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-slate-500 pt-2">
+          <p className="text-center text-xs text-slate-500 pt-3">
             Automated session security with end-to-end token verification.
           </p>
         </div>

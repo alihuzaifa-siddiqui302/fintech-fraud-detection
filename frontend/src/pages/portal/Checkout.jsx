@@ -19,7 +19,41 @@ import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { useToast } from '../../context/ToastContext';
 import RiskScorePill from '../../components/RiskScorePill';
 import OtpVerificationModal from '../../components/OtpVerificationModal';
+import GuidedTour from '../../components/GuidedTour';
 import clsx from 'clsx';
+
+const CHECKOUT_TOUR_STEPS = [
+  {
+    target: '[data-tour="checkout-header"]',
+    title: 'Welcome to the Checkout Simulator',
+    description: 'This is where you simulate real payment transactions. Each transaction is evaluated against 20 fraud detection rules in real time, with sub-100ms adjudication.',
+  },
+  {
+    target: '[data-tour="checkout-amount"]',
+    title: 'Transaction Amount',
+    description: 'Enter any dollar amount. Try amounts over $2,000 to trigger the HIGH_TRANSACTION_AMOUNT rule and see the risk score increase significantly.',
+  },
+  {
+    target: '[data-tour="sandbox-controls"]',
+    title: 'Sandbox Attack Toggles',
+    description: 'These toggles simulate real-world fraud vectors — Foreign IPs, VPN anonymizers, new device fingerprints, and headless bot browsers. Toggle them ON before submitting to see how the risk engine reacts.',
+  },
+  {
+    target: '[data-tour="velocity-attack"]',
+    title: 'Velocity Attack Simulator',
+    description: 'Click this to fire 5 rapid consecutive transactions within seconds. This triggers velocity burst rules (VELOCITY_CARD_1M, VELOCITY_IP_1H) that detect card-testing and brute-force attacks.',
+  },
+  {
+    target: '[data-tour="submit-payment"]',
+    title: 'Submit Payment',
+    description: 'Click here to send the transaction through the fraud pipeline. The engine evaluates 20 behavioral signals (keystroke dynamics, mouse movement, device fingerprint) and returns an instant decision: APPROVED, PENDING_REVIEW (triggers 3DS OTP), or BLOCKED.',
+  },
+  {
+    target: '[data-tour="device-telemetry"]',
+    title: 'Live Device Telemetry',
+    description: 'This shows your active device fingerprint hash and confirms that 20 behavioral signals are being captured in real time — including keystroke variance, paste detection, and browser timezone.',
+  },
+];
 
 export const Checkout = () => {
   const [amount, setAmount] = useState('150.00');
@@ -185,8 +219,11 @@ export const Checkout = () => {
 
   return (
     <div className="space-y-8">
+      {/* Guided Tour */}
+      <GuidedTour tourId="checkout" steps={CHECKOUT_TOUR_STEPS} />
+
       {/* Header */}
-      <div>
+      <div data-tour="checkout-header">
         <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
           <CreditCard className="w-6 h-6 text-brand-400" />
           <span>Checkout Simulator</span>
@@ -199,7 +236,7 @@ export const Checkout = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Transaction Input (7 cols) */}
-        <div className="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
+        <div data-tour="checkout-amount" className="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
           <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-800">
             <div>
               <h2 className="text-base font-semibold text-white">New Transaction</h2>
@@ -251,7 +288,7 @@ export const Checkout = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs text-slate-400 space-y-1">
+            <div data-tour="device-telemetry" className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs text-slate-400 space-y-1">
               <div className="flex justify-between">
                 <span>Active Device Fingerprint:</span>
                 <span className="font-mono text-slate-300">
@@ -266,6 +303,7 @@ export const Checkout = () => {
 
             <button
               id="submit-checkout-button"
+              data-tour="submit-payment"
               type="submit"
               disabled={loading || velocityInProgress}
               className="w-full py-3.5 px-6 rounded-xl bg-brand-500 hover:bg-brand-600 disabled:bg-brand-500/50 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 transition-all duration-200"
@@ -286,7 +324,7 @@ export const Checkout = () => {
         </div>
 
         {/* Right Column: Sandbox Controls (5 cols) */}
-        <div className="lg:col-span-5 bg-slate-900/90 rounded-2xl border border-amber-500/40 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+        <div data-tour="sandbox-controls" className="lg:col-span-5 bg-slate-900/90 rounded-2xl border border-amber-500/40 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
           <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <span className="text-lg">🧪</span>
@@ -368,7 +406,7 @@ export const Checkout = () => {
           </div>
 
           {/* Velocity Attack Button */}
-          <div>
+          <div data-tour="velocity-attack">
             <button
               type="button"
               disabled={velocityInProgress || loading}

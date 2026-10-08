@@ -19,7 +19,42 @@ import CountryFlag from '../../components/CountryFlag';
 import CopyButton from '../../components/CopyButton';
 import PagedTable from '../../components/PagedTable';
 import ForensicDrawer from '../../components/ForensicDrawer';
+import GuidedTour from '../../components/GuidedTour';
 import clsx from 'clsx';
+
+const ANALYST_TOUR_STEPS = [
+  {
+    target: '[data-tour="analyst-header"]',
+    title: 'Welcome to the Analyst Cockpit',
+    description: 'This is your real-time fraud investigation command center. Flagged transactions stream in via Server-Sent Events (SSE), and you can triage, investigate, and adjudicate fraud cases from this single dashboard.',
+  },
+  {
+    target: '[data-tour="metrics-cards"]',
+    title: 'Live Operational Metrics',
+    description: 'These KPI cards show today\'s transaction volume, blocked count, pending review queue, and approved clearances — all updated in real time. Watch the "Pending Review" card pulse when new flagged transactions arrive.',
+  },
+  {
+    target: '[data-tour="status-filters"]',
+    title: 'Status Filters',
+    description: 'Filter the transaction queue by status. Click "Pending" to see transactions awaiting your review, or "Blocked" to see auto-declined payments. The badge count shows how many items need attention.',
+  },
+  {
+    target: '[data-tour="txn-table"]',
+    title: 'Transaction Stream Table',
+    description: 'Every evaluated transaction appears here with its risk score, status, IP address, and country. Click any row to open the Forensic Inspection Drawer with full investigation details.',
+  },
+  {
+    target: '[data-tour="sync-button"]',
+    title: 'Sync Realtime',
+    description: 'Manually refresh metrics and the transaction queue. The dashboard also auto-updates via SSE, but you can force a sync anytime.',
+  },
+  {
+    target: '[data-tour="analyst-header"]',
+    title: 'Forensic Drawer & AI SAR',
+    description: 'Click any transaction row to open the Forensic Drawer — it shows the full risk score breakdown, triggered rules, IP intelligence, device telemetry, and lets you manually Approve or Block. You can also generate an AI-powered FinCEN SAR narrative using Google Gemini!',
+    position: 'bottom',
+  },
+];
 
 export const AnalystDashboard = () => {
   const [metrics, setMetrics] = useState(null);
@@ -318,8 +353,11 @@ export const AnalystDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Guided Tour */}
+      <GuidedTour tourId="analyst" steps={ANALYST_TOUR_STEPS} />
+
       {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div data-tour="analyst-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <span>Analyst Monitoring Dashboard</span>
@@ -330,6 +368,7 @@ export const AnalystDashboard = () => {
         </div>
 
         <button
+          data-tour="sync-button"
           onClick={() => {
             fetchMetricsData();
             fetchTxnsData(page, statusFilter, searchTerm);
@@ -343,7 +382,7 @@ export const AnalystDashboard = () => {
       </div>
 
       {/* METRIC CARDS ROW (4 cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tour="metrics-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Volume */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-sm relative overflow-hidden">
           <div className="flex items-center justify-between text-slate-400 mb-3">
@@ -429,7 +468,7 @@ export const AnalystDashboard = () => {
         {/* Filters & Search Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div data-tour="status-filters" className="flex items-center gap-1.5 flex-wrap">
             {[
               { id: 'ALL', label: 'All' },
               {
@@ -474,6 +513,7 @@ export const AnalystDashboard = () => {
         </div>
 
         {/* Live Stream Table */}
+        <div data-tour="txn-table">
         <PagedTable
           columns={columns}
           data={transactions}
@@ -492,6 +532,7 @@ export const AnalystDashboard = () => {
           emptyMessage="New transactions evaluated in real time will appear here automatically."
           emptyIcon={SlidersHorizontal}
         />
+        </div>
       </div>
 
       {/* Forensic Drawer */}
