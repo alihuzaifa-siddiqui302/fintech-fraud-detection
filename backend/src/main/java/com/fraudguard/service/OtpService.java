@@ -239,26 +239,27 @@ public class OtpService {
         txn.setOtpStatus("OTP_VERIFIED");
 
         final int score = txn.getRiskScore() != null ? txn.getRiskScore() : 0;
-        final boolean isHighRisk = score > AppConstants.DecisionThreshold.OTP_ONLY_MAX;
+        final boolean isPendingReviewBand = score >= AppConstants.DecisionThreshold.PENDING_MIN
+                && score <= AppConstants.DecisionThreshold.PENDING_MAX;
 
         String finalStatus;
         String message;
 
-        if (isHighRisk) {
-            // High-risk band (score 51-69): Customer proved identity, but risk score is too high to auto-approve.
-            // Retain in PENDING_REVIEW for human analyst adjudication!
+        if (isPendingReviewBand) {
+            // High-risk band (score 50–70): Customer verified identity via OTP, but risk score is elevated (50–70).
+            // Retain in PENDING_REVIEW for human analyst adjudication in Analyst Cockpit!
             finalStatus = AppConstants.TransactionStatus.PENDING_REVIEW;
             txn.setStatus(finalStatus);
             txn.setResolutionNotes("3DS OTP identity verified by customer. Retained in PENDING_REVIEW for compliance analyst adjudication due to elevated risk score (" + score + ").");
             message = "Identity verified via 3DS OTP. Held for compliance review due to elevated risk score (" + score + ").";
             log.info("3DS OTP verified for high-risk txn [{}] score={} — retained in PENDING_REVIEW for analyst queue", transactionId, score);
         } else {
-            // Low-medium risk band (score 30-50): Customer self-serves -> auto APPROVED
+            // Low-risk band (score < 50): Customer verified -> auto APPROVED
             finalStatus = AppConstants.TransactionStatus.APPROVED;
             txn.setStatus(finalStatus);
             txn.setResolutionNotes("Approved automatically following successful 3DS SMS OTP challenge completion");
             message = "Payment successfully verified and approved.";
-            log.info("3DS OTP verified for low-medium risk txn [{}] score={} — transaction APPROVED", transactionId, score);
+            log.info("3DS OTP verified for low-risk txn [{}] score={} — transaction APPROVED", transactionId, score);
         }
 
         otpChallengeRepository.save(challenge);
@@ -286,7 +287,7 @@ public class OtpService {
             List<TransactionRuleHit> ruleHits = transactionRuleHitRepository.findByTransactionId(savedTxn.getId());
             SessionSignal sessionSignal = sessionSignalRepository.findByTransactionId(savedTxn.getId()).orElse(null);
             AnalystTransactionDto analystDto = mapperService.toAnalystDto(savedTxn, ruleHits, null, sessionSignal);
-            if (isHighRisk) {
+            if (isPendingReviewBand) {
                 dashboardStreamService.broadcastPendingTransaction(analystDto);
             } else {
                 dashboardStreamService.broadcastTransactionUpdate(analystDto);

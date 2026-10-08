@@ -120,6 +120,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
     double averageRiskScoreAfter(@Param("after") OffsetDateTime after);
 
     /**
+     * Counts all transactions having a specific adjudication status across entire database history.
+     *
+     * @param status transaction status
+     * @return count of matching transactions
+     */
+    long countByStatus(String status);
+
+    /**
+     * Computes the total monetary transaction volume processed across all time.
+     *
+     * @return aggregated monetary sum
+     */
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t")
+    BigDecimal sumAllAmount();
+
+    /**
+     * Computes average risk score across all transactions evaluated across all time.
+     *
+     * @return average composite risk score
+     */
+    @Query("SELECT COALESCE(AVG(t.riskScore), 0) FROM Transaction t")
+    double averageRiskScoreAll();
+
+    /**
      * Counts all transactions created after a given timestamp.
      *
      * @param after starting timestamp boundary

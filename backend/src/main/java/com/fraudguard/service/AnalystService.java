@@ -86,21 +86,39 @@ public class AnalystService {
     public MetricsDto getMetrics() {
         OffsetDateTime since = OffsetDateTime.now().minusHours(24);
 
-        BigDecimal totalVolume = transactionRepository.sumAmountAfter(since);
+        long totalCountToday = transactionRepository.countByCreatedAtAfter(since);
+        BigDecimal totalVolume;
+        long totalCount;
+        long blockedCount;
+        long approvedCount;
+        double avgRiskScore;
+
+        if (totalCountToday > 0) {
+            totalVolume = transactionRepository.sumAmountAfter(since);
+            totalCount = totalCountToday;
+            blockedCount = transactionRepository.countByStatusAndCreatedAtAfter(AppConstants.TransactionStatus.BLOCKED, since);
+            approvedCount = transactionRepository.countByStatusAndCreatedAtAfter(AppConstants.TransactionStatus.APPROVED, since);
+            avgRiskScore = transactionRepository.averageRiskScoreAfter(since);
+        } else {
+            // When trailing 24h is quiet (e.g. demo/portfolio evaluation days later), fallback to platform totals
+            totalCount = transactionRepository.count();
+            totalVolume = transactionRepository.sumAllAmount();
+            blockedCount = transactionRepository.countByStatus(AppConstants.TransactionStatus.BLOCKED);
+            approvedCount = transactionRepository.countByStatus(AppConstants.TransactionStatus.APPROVED);
+            avgRiskScore = transactionRepository.averageRiskScoreAll();
+        }
+
         if (totalVolume == null) {
             totalVolume = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
 
-        long totalCount = transactionRepository.countByCreatedAtAfter(since);
-        long blockedCount = transactionRepository.countByStatusAndCreatedAtAfter(AppConstants.TransactionStatus.BLOCKED, since);
-        long pendingCount = transactionRepository.countByStatusAndCreatedAtAfter(AppConstants.TransactionStatus.PENDING_REVIEW, since);
-        long approvedCount = transactionRepository.countByStatusAndCreatedAtAfter(AppConstants.TransactionStatus.APPROVED, since);
+        // Active pending backlog is always all-time pending adjudication
+        long pendingCount = transactionRepository.countByStatus(AppConstants.TransactionStatus.PENDING_REVIEW);
 
         String autoBlockRate = (totalCount == 0)
                 ? "0.0%"
                 : String.format(Locale.US, "%.1f%%", ((double) blockedCount / totalCount) * 100.0);
 
-        double avgRiskScore = transactionRepository.averageRiskScoreAfter(since);
         double roundedAvgScore = BigDecimal.valueOf(avgRiskScore)
                 .setScale(1, RoundingMode.HALF_UP)
                 .doubleValue();
