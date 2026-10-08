@@ -32,7 +32,7 @@ import com.fraudguard.util.IpExtractor;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -98,7 +98,7 @@ public class CheckoutService {
         // 4. Adjudicate transaction against the 20-rule Fraud Risk Engine
         RiskEvaluationResult evalResult = fraudRiskEngine.evaluate(enrichedCtx);
 
-        // 5. Serialize triggered rules to JSONB format
+        // 5. Serialize triggered rules to JSON format
         String triggeredRulesJson = null;
         try {
             triggeredRulesJson = objectMapper.writeValueAsString(evalResult.getTriggeredRules());
@@ -219,7 +219,7 @@ public class CheckoutService {
                 .map(r -> new RuleHitDto(r.ruleCode(), r.ruleName(), r.pointsApplied(), r.reason(), r.observedValue()))
                 .toList();
 
-        OffsetDateTime timestamp = savedTxn.getCreatedAt() != null ? savedTxn.getCreatedAt() : OffsetDateTime.now();
+        LocalDateTime timestamp = savedTxn.getCreatedAt() != null ? savedTxn.getCreatedAt() : LocalDateTime.now();
 
         // 13. If PENDING_REVIEW and 3DS OTP step-up is enabled, trigger challenge (both bands)
         if (isPending && otpEnabled) {
@@ -288,7 +288,7 @@ public class CheckoutService {
                 txn.getIsVpn() != null && txn.getIsVpn(),
                 txn.getIsTor() != null && txn.getIsTor(),
                 triggeredCodes,
-                txn.getCreatedAt() != null ? txn.getCreatedAt() : OffsetDateTime.now(),
+                txn.getCreatedAt() != null ? txn.getCreatedAt() : LocalDateTime.now(),
                 "TXN_SUBMITTED"
         );
 

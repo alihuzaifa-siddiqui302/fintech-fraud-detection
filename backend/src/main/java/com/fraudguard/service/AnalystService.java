@@ -35,7 +35,7 @@ import com.fraudguard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -84,7 +84,7 @@ public class AnalystService {
      */
     @Transactional(readOnly = true)
     public MetricsDto getMetrics() {
-        OffsetDateTime since = OffsetDateTime.now().minusHours(24);
+        LocalDateTime since = LocalDateTime.now().minusHours(24);
 
         BigDecimal totalVolume = transactionRepository.sumAmountAfter(since);
         if (totalVolume == null) {
@@ -220,7 +220,7 @@ public class AnalystService {
             otpChallengeRepository.findByTransactionIdAndStatus(transactionId, "PENDING")
                     .ifPresent(ch -> {
                         ch.setStatus("VERIFIED");
-                        ch.setVerifiedAt(OffsetDateTime.now());
+                        ch.setVerifiedAt(LocalDateTime.now());
                         otpChallengeRepository.save(ch);
                     });
         }
@@ -481,7 +481,7 @@ public class AnalystService {
                 txn.getIsVpn() != null && txn.getIsVpn(),
                 txn.getIsTor() != null && txn.getIsTor(),
                 null,
-                OffsetDateTime.now(),
+                LocalDateTime.now(),
                 "TXN_DECIDED"
         );
         eventProducer.publishTransaction(event);

@@ -1,7 +1,7 @@
 // com.fraudguard.messaging.event.AuditKafkaEvent
 package com.fraudguard.messaging.event;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Immutable streaming event payload for compliance audit trail synchronization across Kafka.
@@ -25,5 +25,5 @@ public record AuditKafkaEvent(
         String beforeValue,
         String afterValue,
         String ipAddress,
-        OffsetDateTime createdAt
+        LocalDateTime createdAt
 ) {}

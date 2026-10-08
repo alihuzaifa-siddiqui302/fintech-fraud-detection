@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,20 +29,20 @@ public class OtpChallenge {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(columnDefinition = "CHAR(36)", updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "transaction_id", nullable = false, unique = true, columnDefinition = "uuid")
+    @Column(name = "transaction_id", nullable = false, unique = true, columnDefinition = "CHAR(36)")
     private String transactionId;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "uuid")
+    @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 
     @Column(name = "otp_hash", nullable = false, length = 255)
     private String otpHash;
 
     @Column(name = "expires_at", nullable = false)
-    private OffsetDateTime expiresAt;
+    private LocalDateTime expiresAt;
 
     @Builder.Default
     @Column(nullable = false)
@@ -57,9 +57,9 @@ public class OtpChallenge {
     private String status = "PENDING";
 
     @Column(name = "verified_at")
-    private OffsetDateTime verifiedAt;
+    private LocalDateTime verifiedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 }

@@ -7,7 +7,7 @@ import com.fraudguard.entity.AuditLog;
 import com.fraudguard.messaging.FraudGuardEventProducer;
 import com.fraudguard.messaging.event.AuditKafkaEvent;
 import com.fraudguard.repository.AuditLogRepository;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,7 +79,7 @@ public class AuditService {
                 beforeJson,
                 afterJson,
                 ipAddress,
-                OffsetDateTime.now()
+                LocalDateTime.now()
         );
         eventProducer.publishAuditEvent(event);
     }

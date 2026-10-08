@@ -33,7 +33,7 @@ public class RuleCacheService {
     private final ObjectMapper objectMapper;
 
     /**
-     * Retrieves all active fraud rules mapped by rule code, reading from Redis or querying PostgreSQL.
+     * Retrieves all active fraud rules mapped by rule code, reading from Redis or querying MySQL.
      *
      * @return Map of rule code to active FraudRule entity
      */
@@ -47,10 +47,10 @@ public class RuleCacheService {
                 return objectMapper.readValue(cachedJson, new TypeReference<LinkedHashMap<String, FraudRule>>() {});
             }
         } catch (Exception exception) {
-            log.warn("Failed to read rules from Redis cache: {}. Falling back to PostgreSQL.", exception.getMessage());
+            log.warn("Failed to read rules from Redis cache: {}. Falling back to MySQL.", exception.getMessage());
         }
 
-        // Cache miss or Redis error — query PostgreSQL database
+        // Cache miss or Redis error — query MySQL database
         List<FraudRule> activeRulesList = fraudRuleRepository.findByIsEnabledTrueOrderByRiskWeightDesc();
         Map<String, FraudRule> rulesMap = activeRulesList.stream()
                 .collect(Collectors.toMap(

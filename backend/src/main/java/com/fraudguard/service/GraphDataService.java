@@ -13,7 +13,7 @@ import com.fraudguard.repository.DeviceFingerprintRepository;
 import com.fraudguard.repository.TransactionRepository;
 import com.fraudguard.repository.UserRepository;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class GraphDataService {
         int maxNodes = params.getMaxNodes() > 0 ? params.getMaxNodes() : 80;
         int depth = params.getDepth() > 0 ? params.getDepth() : 1;
 
-        OffsetDateTime fromTimestamp = resolveFromTimestamp(params.getFromDate());
+        LocalDateTime fromTimestamp = resolveFromTimestamp(params.getFromDate());
 
         log.info("Building syndicate graph: seedUser='{}' seedIp='{}' seedFp='{}' depth={} maxNodes={} fromDate={}",
                 params.getSeedUserId(), params.getSeedIpAddress(), params.getSeedFingerprint(),
@@ -261,7 +261,7 @@ public class GraphDataService {
     private void expandSecondHop(
             Map<String, GraphNodeDto> nodeMap,
             Map<String, GraphEdgeDto> edgeMap,
-            OffsetDateTime fromTimestamp,
+            LocalDateTime fromTimestamp,
             int maxNodes
     ) {
         Set<String> currentUserIds = new HashSet<>();
@@ -316,7 +316,7 @@ public class GraphDataService {
 
         long accountAgeDays = 0;
         if (user != null && user.getCreatedAt() != null) {
-            accountAgeDays = Math.max(0, ChronoUnit.DAYS.between(user.getCreatedAt(), OffsetDateTime.now()));
+            accountAgeDays = Math.max(0, ChronoUnit.DAYS.between(user.getCreatedAt(), LocalDateTime.now()));
         }
 
         Map<String, Object> data = new HashMap<>();
@@ -388,7 +388,7 @@ public class GraphDataService {
     private void createAndAddDeviceNode(
             String fp,
             int txnVolume,
-            OffsetDateTime fromTimestamp,
+            LocalDateTime fromTimestamp,
             Map<String, GraphNodeDto> nodeMap
     ) {
         boolean isBlacklisted = blacklistRepository.existsByTargetTypeAndTargetValue("DEVICE", fp)
@@ -419,7 +419,7 @@ public class GraphDataService {
         nodeMap.put(node.id(), node);
     }
 
-    private List<Transaction> collectSeedTransactions(GraphQueryParams params, OffsetDateTime fromTimestamp, int maxNodes) {
+    private List<Transaction> collectSeedTransactions(GraphQueryParams params, LocalDateTime fromTimestamp, int maxNodes) {
         Pageable pageable = PageRequest.of(0, Math.min(maxNodes, 100));
 
         if (params.getSeedUserId() != null && !params.getSeedUserId().isBlank()) {
@@ -447,7 +447,7 @@ public class GraphDataService {
         return transactionRepository.findRecentSeedTransactions(fromTimestamp, pageable);
     }
 
-    private OffsetDateTime resolveFromTimestamp(String fromDate) {
+    private LocalDateTime resolveFromTimestamp(String fromDate) {
         if (fromDate != null && !fromDate.isBlank()) {
             try {
                 LocalDate parsed = LocalDate.parse(fromDate.trim());
@@ -456,7 +456,7 @@ public class GraphDataService {
                 log.warn("Invalid fromDate format [{}], falling back to default timeframe: {}", fromDate, ex.getMessage());
             }
         }
-        return OffsetDateTime.now().minusDays(7);
+        return LocalDateTime.now().minusDays(7);
     }
 
     private String sanitizeId(String val) {

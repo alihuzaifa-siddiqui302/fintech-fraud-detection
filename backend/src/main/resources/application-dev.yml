@@ -1,17 +1,18 @@
 # ==============================================================================
 # FraudGuard — LOCAL DEVELOPMENT PROFILE
 # Active when: spring.profiles.active=dev (default)
-# Infrastructure: Local Docker containers (postgres, redis, kafka via docker-compose)
+# Infrastructure: Local Docker containers (mysql, redis, kafka via docker-compose)
 # ==============================================================================
 
 spring:
   # ----------------------------------------------------------------------------
-  # PostgreSQL — Local Docker container
+  # MySQL — Local Docker container
   # ----------------------------------------------------------------------------
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/fraudguard_db?stringtype=unspecified
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:fraudguard_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   # ----------------------------------------------------------------------------
   # Redis — Local Docker container (no TLS)

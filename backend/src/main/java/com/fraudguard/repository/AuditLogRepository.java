@@ -81,7 +81,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
      * @param createdAt timestamp
      * @return true if record exists
      */
-    boolean existsByEntityTypeAndEntityIdAndCreatedAt(String entityType, String entityId, java.time.OffsetDateTime createdAt);
+    boolean existsByEntityTypeAndEntityIdAndCreatedAt(String entityType, String entityId, java.time.LocalDateTime createdAt);
 }
 
 

@@ -1,7 +1,7 @@
 # ==============================================================================
 # FraudGuard — PRODUCTION PROFILE
 # Active when: SPRING_PROFILES_ACTIVE=prod (set in Render / cloud env)
-# Infrastructure: Managed cloud free tiers (Neon PG, Upstash Redis, Upstash Kafka)
+# Infrastructure: Managed cloud services (PlanetScale/MySQL, Upstash Redis, Upstash Kafka)
 # ==============================================================================
 
 server:
@@ -12,22 +12,21 @@ server:
 
 spring:
   # ----------------------------------------------------------------------------
-  # PostgreSQL — Neon (free tier, serverless Postgres, requires SSL)
-  # Env var format: postgresql://user:pass@host/dbname?sslmode=require
+  # MySQL — Cloud Managed (e.g. PlanetScale, AWS RDS MySQL, Aiven MySQL)
+  # Env var format: jdbc:mysql://user:pass@host:3306/dbname?useSSL=true
   # ----------------------------------------------------------------------------
   datasource:
     url: ${DATABASE_URL}
     username: ${DB_USERNAME:}
     password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 5          # Neon free tier connection limit
+      maximum-pool-size: 5          # Cloud free tier connection limit
       minimum-idle: 1
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
       connection-test-query: SELECT 1
-      data-source-properties:
-        stringtype: unspecified
 
   # ----------------------------------------------------------------------------
   # Redis — Upstash (free tier, TLS required)

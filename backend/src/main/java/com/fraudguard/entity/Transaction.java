@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,10 +29,10 @@ public class Transaction {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(columnDefinition = "CHAR(36)", updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "user_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "user_id", columnDefinition = "CHAR(36)", nullable = false)
     private String userId;
 
     @Column(nullable = false, precision = 15, scale = 2)
@@ -101,13 +101,13 @@ public class Transaction {
     @Column(nullable = false, length = 30)
     private String status;
 
-    @Column(name = "triggered_rules", columnDefinition = "jsonb")
+    @Column(name = "triggered_rules", columnDefinition = "JSON")
     private String triggeredRules;
 
-    @Column(name = "reviewed_by", columnDefinition = "uuid")
+    @Column(name = "reviewed_by", columnDefinition = "CHAR(36)")
     private String reviewedBy;
 
-    @Column(name = "resolution_notes", columnDefinition = "text")
+    @Column(name = "resolution_notes", columnDefinition = "TEXT")
     private String resolutionNotes;
 
     @Column(name = "otp_required")
@@ -118,5 +118,5 @@ public class Transaction {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 }

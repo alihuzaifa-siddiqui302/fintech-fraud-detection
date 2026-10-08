@@ -4,7 +4,7 @@ package com.fraudguard.service;
 import com.fraudguard.exception.OtpDeliveryException;
 import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +50,7 @@ public class OtpEmailService {
             BigDecimal amount,
             String currency,
             String transactionId,
-            OffsetDateTime expiresAt
+            LocalDateTime expiresAt
     ) {
         String shortTxnId = transactionId != null && transactionId.length() >= 8
                 ? transactionId.substring(0, 8).toUpperCase()

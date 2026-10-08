@@ -2,7 +2,7 @@
 package com.fraudguard.dto.response;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Representation of a fraud detection rule for configuration management.
@@ -24,5 +24,5 @@ public record FraudRuleDto(
     BigDecimal thresholdValue,
     int riskWeight,
     boolean isEnabled,
-    OffsetDateTime updatedAt
+    LocalDateTime updatedAt
 ) {}

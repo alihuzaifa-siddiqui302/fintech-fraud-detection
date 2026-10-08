@@ -8,7 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,13 +39,13 @@ public class Blacklist {
     @Column(name = "target_value", nullable = false)
     private String targetValue;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String reason;
 
-    @Column(name = "added_by", columnDefinition = "uuid")
+    @Column(name = "added_by", columnDefinition = "CHAR(36)")
     private String addedBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 }

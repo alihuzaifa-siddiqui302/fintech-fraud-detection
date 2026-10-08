@@ -1,7 +1,7 @@
 // com.fraudguard.dto.response.AuditLogDto
 package com.fraudguard.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Representation of an immutable audit trail entry for regulatory reviews.
@@ -27,5 +27,5 @@ public record AuditLogDto(
     String afterValue,
     String ipAddress,
     String notes,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 ) {}

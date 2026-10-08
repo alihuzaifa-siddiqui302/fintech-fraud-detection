@@ -2,7 +2,7 @@
 package com.fraudguard.dto.response;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -61,5 +61,5 @@ public record AnalystTransactionDto(
     List<RuleHitDto> triggeredRules,
     String reviewedByName,
     String resolutionNotes,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 ) {}

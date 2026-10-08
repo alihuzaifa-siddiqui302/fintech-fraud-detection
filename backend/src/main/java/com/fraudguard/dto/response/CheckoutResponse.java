@@ -1,7 +1,7 @@
 // com.fraudguard.dto.response.CheckoutResponse
 package com.fraudguard.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -28,11 +28,11 @@ public record CheckoutResponse(
     String statusMessage,
     List<RuleHitDto> triggeredRules,
     int totalRulesEvaluated,
-    OffsetDateTime timestamp,
+    LocalDateTime timestamp,
     String otpTransactionId,
     String demoOtp,
     String maskedEmail,
-    OffsetDateTime expiresAt
+    LocalDateTime expiresAt
 ) {
     /**
      * Convenience constructor for non-OTP responses (APPROVED / BLOCKED / PENDING_REVIEW).
@@ -46,7 +46,7 @@ public record CheckoutResponse(
         String statusMessage,
         List<RuleHitDto> triggeredRules,
         int totalRulesEvaluated,
-        OffsetDateTime timestamp
+        LocalDateTime timestamp
     ) {
         this(transactionId, status, riskScore, statusColor, statusMessage,
              triggeredRules, totalRulesEvaluated, timestamp, null, null, null, null);

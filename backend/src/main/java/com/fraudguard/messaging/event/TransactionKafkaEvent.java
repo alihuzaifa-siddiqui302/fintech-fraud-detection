@@ -2,7 +2,7 @@
 package com.fraudguard.messaging.event;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,6 +34,6 @@ public record TransactionKafkaEvent(
         boolean isVpn,
         boolean isTor,
         List<String> triggeredRuleCodes,
-        OffsetDateTime createdAt,
+        LocalDateTime createdAt,
         String eventType
 ) {}

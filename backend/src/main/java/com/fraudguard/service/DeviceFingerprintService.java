@@ -3,7 +3,7 @@ package com.fraudguard.service;
 
 import com.fraudguard.entity.DeviceFingerprint;
 import com.fraudguard.repository.DeviceFingerprintRepository;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +43,8 @@ public class DeviceFingerprintService {
                         .userId(userId)
                         .fingerprintHash(sanitizedHash)
                         .txnCount(1)
-                        .firstSeen(OffsetDateTime.now())
-                        .lastSeen(OffsetDateTime.now())
+                        .firstSeen(LocalDateTime.now())
+                        .lastSeen(LocalDateTime.now())
                         .build();
                 deviceFingerprintRepository.saveAndFlush(newBinding);
                 log.info("New device fingerprint detected for user {}: {}", userId, sanitizedHash);
@@ -55,7 +55,7 @@ public class DeviceFingerprintService {
                 deviceFingerprintRepository.findByUserIdAndFingerprintHash(userId, sanitizedHash)
                         .ifPresent(existing -> {
                             existing.setTxnCount(existing.getTxnCount() + 1);
-                            existing.setLastSeen(OffsetDateTime.now());
+                            existing.setLastSeen(LocalDateTime.now());
                             deviceFingerprintRepository.save(existing);
                         });
                 return false;
@@ -64,7 +64,7 @@ public class DeviceFingerprintService {
 
         DeviceFingerprint existing = existingOpt.get();
         existing.setTxnCount(existing.getTxnCount() + 1);
-        existing.setLastSeen(OffsetDateTime.now());
+        existing.setLastSeen(LocalDateTime.now());
         deviceFingerprintRepository.save(existing);
         log.debug("Recognized device fingerprint for user {} (txnCount={})", userId, existing.getTxnCount());
         return false;

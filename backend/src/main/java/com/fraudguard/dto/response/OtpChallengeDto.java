@@ -1,7 +1,7 @@
 // com.fraudguard.dto.response.OtpChallengeDto
 package com.fraudguard.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Public metadata representing an active 3DS OTP challenge sent to client checkout interfaces.
@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 public record OtpChallengeDto(
     String transactionId,
     String status,
-    OffsetDateTime expiresAt,
+    LocalDateTime expiresAt,
     int maxAttempts,
     String maskedEmail,
     String message,
@@ -19,7 +19,7 @@ public record OtpChallengeDto(
     public OtpChallengeDto(
             String transactionId,
             String status,
-            OffsetDateTime expiresAt,
+            LocalDateTime expiresAt,
             int maxAttempts,
             String maskedEmail,
             String message

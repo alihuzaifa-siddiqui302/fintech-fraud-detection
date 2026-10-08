@@ -15,7 +15,7 @@ import com.fraudguard.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
 import java.util.UUID;
@@ -126,9 +126,9 @@ public class EnrichmentService {
         long deviceSharedAcrossAccounts = deviceFingerprintService.countAccountsSharingDevice(effectiveFingerprint);
 
         // 5. Query Historical Database Telemetry
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime thirtyDaysAgo = now.minusDays(30);
-        OffsetDateTime twentyFourHoursAgo = now.minusHours(24);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime thirtyDaysAgo = now.minusDays(30);
+        LocalDateTime twentyFourHoursAgo = now.minusHours(24);
 
         long userTxnCountLast30d = 0L;
         BigDecimal userAvgAmountLast30d = BigDecimal.ZERO;

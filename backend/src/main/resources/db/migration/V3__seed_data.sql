@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FraudGuard Database Migration: V3__seed_data.sql
--- Engine: PostgreSQL 16+
+-- Engine: MySQL 8.0+
 -- Description: Baseline seed data for development, staging, and demo environments.
 --              Includes pre-configured demo users (Customer & Analyst) with verified
 --              $2a$12$ BCrypt credentials and the complete initial catalog of
@@ -13,7 +13,7 @@
 -- Password for both accounts: 'demo1234'
 -- Hashes: Verified cryptographically using BCrypt with work factor cost 12 ($2a$12$)
 -- ============================================================================
-INSERT INTO users (id, email, name, password_hash, role, home_country, created_at)
+INSERT IGNORE INTO users (id, email, name, password_hash, role, home_country, created_at)
 VALUES 
     (
         'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -32,14 +32,13 @@ VALUES
         'ROLE_ANALYST',
         'US',
         NOW()
-    )
-ON CONFLICT (id) DO NOTHING;
+    );
 
 -- ============================================================================
 -- BLOCK 2: Fraud Detection Rules Catalog (All 20 Rules)
 -- Defines risk weights, threshold values, activation flags, and descriptions.
 -- ============================================================================
-INSERT INTO fraud_rules (rule_code, name, description, threshold_value, risk_weight, is_enabled)
+INSERT IGNORE INTO fraud_rules (rule_code, name, description, threshold_value, risk_weight, is_enabled)
 VALUES
     (
         'BLACKLIST_MATCH',
@@ -200,5 +199,5 @@ VALUES
         0.00,
         10,
         TRUE
-    )
-ON CONFLICT (rule_code) DO NOTHING;
+    );
+

@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,16 +31,16 @@ public class SarReport {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(columnDefinition = "CHAR(36)", updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "transaction_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "transaction_id", columnDefinition = "CHAR(36)", nullable = false)
     private String transactionId;
 
-    @Column(name = "generated_by", columnDefinition = "uuid", nullable = false)
+    @Column(name = "generated_by", columnDefinition = "CHAR(36)", nullable = false)
     private String generatedBy;
 
-    @Column(name = "report_text", columnDefinition = "text", nullable = false)
+    @Column(name = "report_text", columnDefinition = "TEXT", nullable = false)
     private String reportText;
 
     @Builder.Default
@@ -61,19 +61,19 @@ public class SarReport {
     private String status = "DRAFT";
 
     @Column(name = "filed_at")
-    private OffsetDateTime filedAt;
+    private LocalDateTime filedAt;
 
-    @Column(name = "filed_by", columnDefinition = "uuid")
+    @Column(name = "filed_by", columnDefinition = "CHAR(36)")
     private String filedBy;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }

@@ -1,6 +1,6 @@
 # FraudGuard — Production Deployment & Operations Guide
 
-This guide provides end-to-end instructions for deploying and running **FraudGuard** across local environments and cloud free-tier infrastructure (Vercel, Render, Neon PostgreSQL, Upstash Redis, and Upstash Kafka).
+This guide provides end-to-end instructions for deploying and running **FraudGuard** across local environments and cloud free-tier infrastructure (Vercel, Render, Neon MySQL, Upstash Redis, and Upstash Kafka).
 
 ---
 
@@ -10,7 +10,7 @@ This guide provides end-to-end instructions for deploying and running **FraudGua
 | :--- | :--- | :--- | :--- |
 | **Frontend** | React 18, Vite, Tailwind CSS, Lucide | [Vercel](https://vercel.com) / Cloudflare Pages | Unlimited Bandwidth |
 | **Backend** | Spring Boot 3.2, Java 21, JPA/Flyway | [Render.com](https://render.com) (Docker Web Service) | 512 MB RAM / 0.1 CPU |
-| **Relational DB** | PostgreSQL 16 (Flyway V1–V6) | [Neon.tech](https://neon.tech) | 0.5 GB Storage |
+| **Relational DB** | MySQL 8.0 (Flyway V1–V6) | [Neon.tech](https://neon.tech) | 0.5 GB Storage |
 | **Cache & State** | Redis 7 (Token Bucket / Sliding Window) | [Upstash Redis](https://upstash.com) | 10k requests/day |
 | **Event Streaming**| Apache Kafka (Audit & Anomaly Events) | [Upstash Kafka](https://upstash.com) | 10k messages/day |
 | **AI SAR Engine**  | Google Gemini Flash (`gemini-2.0-flash`) | [Google AI Studio](https://aistudio.google.com) | 15 RPM / 1M tokens/day |
@@ -26,8 +26,8 @@ All sensitive credentials and connection strings are parameterized via environme
 | Variable | Required In | Format / Example | Acquisition Source |
 | :--- | :---: | :--- | :--- |
 | `SPRING_PROFILES_ACTIVE` | Both | `dev` or `prod` | Set `dev` for local Docker, `prod` for cloud |
-| `DATABASE_URL` | Prod | `postgresql://user:pass@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require` | [Neon Console](https://console.neon.tech) → Dashboard |
-| `DB_PASSWORD` | Local | e.g. `postgres` or `Siddiqui@407` | Local PostgreSQL password |
+| `DATABASE_URL` | Prod | `MySQL://user:pass@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require` | [Neon Console](https://console.neon.tech) → Dashboard |
+| `DB_PASSWORD` | Local | e.g. `postgres` or `Siddiqui@407` | Local MySQL password |
 | `REDIS_URL` | Prod | `rediss://default:token@xyz.upstash.io:6379` | [Upstash Console](https://console.upstash.com) → Redis → Details |
 | `KAFKA_BOOTSTRAP_SERVERS`| Prod | `xyz.upstash.io:9092` | [Upstash Console](https://console.upstash.com) → Kafka → Endpoints |
 | `KAFKA_KEY` | Prod | `YWx...` (username) | Upstash Kafka credentials tab |
@@ -52,13 +52,13 @@ FraudGuard uses a Dual Spring Profile architecture organized under `backend/src/
 
 - **`application.yml`**: Common baseline properties (server port 8080, Flyway migrations V1–V6, Hikari defaults, and profile switch `${SPRING_PROFILES_ACTIVE:dev}`).
 - **`application-dev.yml`**: Configured for local development and local containers.
-  - Connects to PostgreSQL at `localhost:5432` (`db/migration/V1__schema.sql` through `V6`).
+  - Connects to MySQL at `localhost:3306` (`db/migration/V1__schema.sql` through `V6`).
   - Redis on `localhost:6379` (plaintext, non-TLS).
   - Kafka on `localhost:9092` with `PLAINTEXT` protocol (fails safe if unavailable).
   - Mailtrap sandbox for 3DS OTP email testing.
   - Verbose debug logging (`DEBUG` for FraudGuard engine, `DEBUG` for SQL queries).
 - **`application-prod.yml`**: Configured for cloud managed datastores.
-  - PostgreSQL datasource connecting via `${DATABASE_URL}` with `sslmode=require` and Hikari connection pool capped at 5 for Neon free tier.
+  - MySQL datasource connecting via `${DATABASE_URL}` with `sslmode=require` and Hikari connection pool capped at 5 for Neon free tier.
   - Redis connecting via `${REDIS_URL}` with SSL/TLS explicitly active.
   - Kafka connecting via `${KAFKA_BOOTSTRAP_SERVERS}` with `SASL_SSL` protocol and `SCRAM-SHA-256` authentication using `${KAFKA_KEY}` and `${KAFKA_SECRET}`.
   - Strict secret validation with no hardcoded fallback values.
@@ -107,7 +107,7 @@ The stack exposes:
 - **Frontend SPA:** [http://localhost:5173](http://localhost:5173) (served via hardened Nginx Alpine with SPA rewrites & SSE proxy)
 - **Backend API:** [http://localhost:8080](http://localhost:8080)
 - **Actuator Health:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
-- **PostgreSQL:** `localhost:5432`
+- **MySQL:** `localhost:3306`
 - **Redis:** `localhost:6379`
 - **Kafka:** `localhost:9092`
 
@@ -116,9 +116,9 @@ The stack exposes:
 ## 5. Free-Tier Cloud Deployment Guide
 
 ### Step 1: Provision Managed Datastores (Free Tier)
-1. **Neon PostgreSQL:**
+1. **Neon MySQL:**
    - Create a free project at [neon.tech](https://neon.tech).
-   - In Dashboard, select **Connection Details** and copy the pooled connection URI (`postgresql://...@ep-xyz.../neondb?sslmode=require`).
+   - In Dashboard, select **Connection Details** and copy the pooled connection URI (`MySQL://...@ep-xyz.../neondb?sslmode=require`).
 2. **Upstash Redis:**
    - Create a free Redis database at [upstash.com](https://upstash.com).
    - In Details tab, copy the **Node / Redis URL** (`rediss://default:...@...upstash.io:6379`).

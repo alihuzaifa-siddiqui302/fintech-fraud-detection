@@ -3,7 +3,7 @@ package com.fraudguard.repository;
 
 import com.fraudguard.entity.Transaction;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,7 +51,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @param after window boundary timestamp
      * @return count of transactions
      */
-    long countByUserIdAndCreatedAtAfter(String userId, OffsetDateTime after);
+    long countByUserIdAndCreatedAtAfter(String userId, LocalDateTime after);
 
     /**
      * Counts recent transactions originating from a specific IP address within a sliding window.
@@ -60,7 +60,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @param after window boundary timestamp
      * @return count of transactions
      */
-    long countByIpAddressAndCreatedAtAfter(String ipAddress, OffsetDateTime after);
+    long countByIpAddressAndCreatedAtAfter(String ipAddress, LocalDateTime after);
 
     /**
      * Counts transactions having a specific adjudication status within a time period.
@@ -69,7 +69,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @param after starting timestamp
      * @return count of matching transactions
      */
-    long countByStatusAndCreatedAtAfter(String status, OffsetDateTime after);
+    long countByStatusAndCreatedAtAfter(String status, LocalDateTime after);
 
     /**
      * Counts recent failed/blocked transactions for a user to identify brute-force card testing.
@@ -79,7 +79,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @param after starting timestamp
      * @return count of matching transactions
      */
-    long countByUserIdAndStatusAndCreatedAtAfter(String userId, String status, OffsetDateTime after);
+    long countByUserIdAndStatusAndCreatedAtAfter(String userId, String status, LocalDateTime after);
 
     /**
      * Computes the total monetary transaction volume processed after a specified timestamp.
@@ -88,7 +88,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @return aggregated monetary sum
      */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.createdAt > :after")
-    BigDecimal sumAmountAfter(@Param("after") OffsetDateTime after);
+    BigDecimal sumAmountAfter(@Param("after") LocalDateTime after);
 
     /**
      * Computes the rolling average transaction amount for a customer within a historical window.
@@ -98,7 +98,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @return average transaction amount
      */
     @Query("SELECT COALESCE(AVG(t.amount), 0) FROM Transaction t WHERE t.userId = :userId AND t.createdAt > :after")
-    BigDecimal averageAmountByUserAfter(@Param("userId") String userId, @Param("after") OffsetDateTime after);
+    BigDecimal averageAmountByUserAfter(@Param("userId") String userId, @Param("after") LocalDateTime after);
 
     /**
      * Counts distinct customer accounts transacting through the same IP within a sliding timeframe.
@@ -108,7 +108,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @return count of distinct user accounts
      */
     @Query("SELECT COUNT(DISTINCT t.userId) FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after")
-    long countDistinctUsersByIpAfter(@Param("ip") String ip, @Param("after") OffsetDateTime after);
+    long countDistinctUsersByIpAfter(@Param("ip") String ip, @Param("after") LocalDateTime after);
 
     /**
      * Computes average risk score across all transactions evaluated within a given timeframe.
@@ -117,7 +117,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @return average composite risk score
      */
     @Query("SELECT COALESCE(AVG(t.riskScore), 0) FROM Transaction t WHERE t.createdAt > :after")
-    double averageRiskScoreAfter(@Param("after") OffsetDateTime after);
+    double averageRiskScoreAfter(@Param("after") LocalDateTime after);
 
     /**
      * Counts all transactions created after a given timestamp.
@@ -125,7 +125,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @param after starting timestamp boundary
      * @return count of transactions
      */
-    long countByCreatedAtAfter(OffsetDateTime after);
+    long countByCreatedAtAfter(LocalDateTime after);
 
     /**
      * Search transactions across IP address or transaction ID substring.
@@ -157,7 +157,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * Finds distinct user account identifiers associated with a given IP address since a cutoff time.
      */
     @Query("SELECT DISTINCT t.userId FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after")
-    List<String> findDistinctUserIdsByIp(@Param("ip") String ip, @Param("after") OffsetDateTime after);
+    List<String> findDistinctUserIdsByIp(@Param("ip") String ip, @Param("after") LocalDateTime after);
 
     /**
      * Finds distinct IP addresses used by a specific user.
@@ -175,7 +175,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * Finds distinct user accounts that transacted from a given device fingerprint since a cutoff time.
      */
     @Query("SELECT DISTINCT t.userId FROM Transaction t WHERE t.deviceFingerprint = :fp AND t.createdAt > :after")
-    List<String> findDistinctUserIdsByFingerprint(@Param("fp") String fp, @Param("after") OffsetDateTime after);
+    List<String> findDistinctUserIdsByFingerprint(@Param("fp") String fp, @Param("after") LocalDateTime after);
 
     /**
      * Computes the historical average risk score evaluated for a customer account.
@@ -187,36 +187,36 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * Counts the total transactions originating from a specific IP since a cutoff timestamp.
      */
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after")
-    long countByIpAfter(@Param("ip") String ip, @Param("after") OffsetDateTime after);
+    long countByIpAfter(@Param("ip") String ip, @Param("after") LocalDateTime after);
 
     /**
      * Retrieves suspicious transactions evaluated at or above a risk threshold for graph seeding.
      */
     @Query("SELECT t FROM Transaction t WHERE t.riskScore >= :minScore AND t.createdAt > :after ORDER BY t.createdAt DESC")
-    List<Transaction> findSuspiciousSeedTransactions(@Param("minScore") int minScore, @Param("after") OffsetDateTime after, Pageable pageable);
+    List<Transaction> findSuspiciousSeedTransactions(@Param("minScore") int minScore, @Param("after") LocalDateTime after, Pageable pageable);
 
     /**
      * Retrieves seed transactions for a specific user.
      */
     @Query("SELECT t FROM Transaction t WHERE t.userId = :userId AND t.createdAt > :after ORDER BY t.createdAt DESC")
-    List<Transaction> findSeedTransactionsByUser(@Param("userId") String userId, @Param("after") OffsetDateTime after, Pageable pageable);
+    List<Transaction> findSeedTransactionsByUser(@Param("userId") String userId, @Param("after") LocalDateTime after, Pageable pageable);
 
     /**
      * Retrieves seed transactions for a specific IP address.
      */
     @Query("SELECT t FROM Transaction t WHERE t.ipAddress = :ip AND t.createdAt > :after ORDER BY t.createdAt DESC")
-    List<Transaction> findSeedTransactionsByIp(@Param("ip") String ip, @Param("after") OffsetDateTime after, Pageable pageable);
+    List<Transaction> findSeedTransactionsByIp(@Param("ip") String ip, @Param("after") LocalDateTime after, Pageable pageable);
 
     /**
      * Retrieves seed transactions for a specific device fingerprint.
      */
     @Query("SELECT t FROM Transaction t WHERE t.deviceFingerprint = :fp AND t.createdAt > :after ORDER BY t.createdAt DESC")
-    List<Transaction> findSeedTransactionsByFingerprint(@Param("fp") String fp, @Param("after") OffsetDateTime after, Pageable pageable);
+    List<Transaction> findSeedTransactionsByFingerprint(@Param("fp") String fp, @Param("after") LocalDateTime after, Pageable pageable);
 
     /**
      * Retrieves recent seed transactions when no specific filters or elevated scores match.
      */
     @Query("SELECT t FROM Transaction t WHERE t.createdAt > :after ORDER BY t.createdAt DESC")
-    List<Transaction> findRecentSeedTransactions(@Param("after") OffsetDateTime after, Pageable pageable);
+    List<Transaction> findRecentSeedTransactions(@Param("after") LocalDateTime after, Pageable pageable);
 }
 

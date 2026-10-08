@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Spring Security UserDetailsService loading authenticated principals from PostgreSQL.
+ * Spring Security UserDetailsService loading authenticated principals from MySQL.
  */
 @Slf4j
 @Service

@@ -2,7 +2,7 @@
 package com.fraudguard.engine.model;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -82,5 +82,5 @@ public class EnrichedTransactionContext {
     private String userId;
     private String userEmail;
     private String userHomeCountry;
-    private OffsetDateTime userCreatedAt;
+    private LocalDateTime userCreatedAt;
 }

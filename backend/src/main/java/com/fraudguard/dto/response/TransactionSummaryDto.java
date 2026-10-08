@@ -2,7 +2,7 @@
 package com.fraudguard.dto.response;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Compact transaction summary representation for customer dashboard tables.
@@ -22,5 +22,5 @@ public record TransactionSummaryDto(
     String status,
     String statusColor,
     int riskScore,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 ) {}

@@ -14,7 +14,7 @@ import com.fraudguard.repository.SarReportRepository;
 import com.fraudguard.repository.TransactionRepository;
 import com.fraudguard.repository.TransactionRuleHitRepository;
 import com.fraudguard.repository.UserRepository;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +133,7 @@ public class SarService {
         String analystId = analyst != null ? analyst.getId() : null;
 
         if ("FILED".equals(requestedStatus)) {
-            sarReport.setFiledAt(OffsetDateTime.now());
+            sarReport.setFiledAt(LocalDateTime.now());
             sarReport.setFiledBy(analystId);
         }
 

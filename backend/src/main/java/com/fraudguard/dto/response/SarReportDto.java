@@ -1,7 +1,7 @@
 // com.fraudguard.dto.response.SarReportDto
 package com.fraudguard.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Data transfer representation of an AI Suspicious Activity Report.
@@ -17,7 +17,7 @@ public record SarReportDto(
         String status,
         String generatedByEmail,
         String filedByEmail,
-        OffsetDateTime filedAt,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        LocalDateTime filedAt,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {}

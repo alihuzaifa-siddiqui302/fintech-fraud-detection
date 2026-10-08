@@ -25,7 +25,7 @@ public class BlacklistCacheService {
     private final BlacklistRepository blacklistRepository;
 
     /**
-     * Warms the Redis in-memory cache with all active blacklist entries from PostgreSQL on startup.
+     * Warms the Redis in-memory cache with all active blacklist entries from MySQL on startup.
      */
     @PostConstruct
     public void warmCache() {
@@ -44,7 +44,7 @@ public class BlacklistCacheService {
     }
 
     /**
-     * Checks if a target identifier is blacklisted, verifying Redis first and falling back to PostgreSQL if Redis fails.
+     * Checks if a target identifier is blacklisted, verifying Redis first and falling back to MySQL if Redis fails.
      *
      * @param targetType classification type (IP, DEVICE, EMAIL, FINGERPRINT)
      * @param targetValue target identifier
@@ -62,7 +62,7 @@ public class BlacklistCacheService {
                 return true;
             }
         } catch (Exception exception) {
-            log.warn("Redis blacklist lookup failed for key {}: {}. Falling back to PostgreSQL.", key, exception.getMessage());
+            log.warn("Redis blacklist lookup failed for key {}: {}. Falling back to MySQL.", key, exception.getMessage());
             return blacklistRepository.existsByTargetTypeAndTargetValue(targetType.trim(), targetValue.trim());
         }
 

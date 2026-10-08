@@ -2,7 +2,7 @@
 package com.fraudguard.repository;
 
 import com.fraudguard.entity.OtpChallenge;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,5 +27,5 @@ public interface OtpChallengeRepository extends JpaRepository<OtpChallenge, Stri
     /**
      * Finds expired pending OTP records for scheduled background cleanup.
      */
-    List<OtpChallenge> findByStatusAndExpiresAtBefore(String status, OffsetDateTime now);
+    List<OtpChallenge> findByStatusAndExpiresAtBefore(String status, LocalDateTime now);
 }

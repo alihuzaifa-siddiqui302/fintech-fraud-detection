@@ -6,7 +6,7 @@
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2.5-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?style=flat&logo=react&logoColor=black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-16-4169E1?style=flat&logo=MySQL&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis&logoColor=white)
 ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-7.4-231F20?style=flat&logo=apachekafka&logoColor=white)
 ![Gemini AI](https://img.shields.io/badge/Gemini_AI-2.5_Flash-4285F4?style=flat&logo=google&logoColor=white)
@@ -68,7 +68,7 @@ Designed for high-growth neo-banks and payment service providers (PSPs), FraudGu
 |                                                                                                         v               |
 |   +-----------------------------------------------------------------------------------------------------------------+   |
 |   |                                          ADJUDICATION & AUDIT ORCHESTRATION                                     |   |
-|   |   - Atomic Transaction Persistence (PostgreSQL 16)                                                              |   |
+|   |   - Atomic Transaction Persistence (MySQL 8.0)                                                              |   |
 |   |   - Instant Decision: APPROVED | PENDING_REVIEW (3DS OTP Challenge) | BLOCKED                                    |   |
 |   |   - Asynchronous Event Publishing (Kafka Producer with Snappy compression & Idempotence)                         |   |
 |   |   - GenAI Regulatory Narrative Dispatcher (Google Gemini 2.5 Flash)                                             |   |
@@ -77,7 +77,7 @@ Designed for high-growth neo-banks and payment service providers (PSPs), FraudGu
                      |                                           |                                           |
                      v                                           v                                           v
        +---------------------------+               +---------------------------+               +---------------------------+
-       |       PostgreSQL 16       |               |          Redis 7          |               |       Apache Kafka        |
+       |       MySQL 8.0       |               |          Redis 7          |               |       Apache Kafka        |
        |  - Transactions & Audits  |               |  - Sliding-Window Limits  |               |  - fraudguard.txn.raw     |
        |  - Flyway Migrations (V6) |               |  - Blacklist Fast Cache   |               |  - fraudguard.txn.decided |
        |  - Strict Referential FKs |               |  - Rule Weights & Caching |               |  - fraudguard.audit.events|
@@ -129,7 +129,7 @@ Copy-Item .env.example .env
 > *Note: If you have a Google Gemini API key, add `GEMINI_API_KEY=your_key_here` to `.env` to enable live AI SAR generation.*
 
 ### Step 3: Start the Application with Docker Compose
-Launch all 6 services (Frontend, Backend, PostgreSQL, Redis, Kafka, Zookeeper) with one command:
+Launch all 6 services (Frontend, Backend, MySQL, Redis, Kafka, Zookeeper) with one command:
 ```bash
 # Standard local development stack:
 docker compose up --build -d
@@ -346,8 +346,8 @@ fintech-fraud-detection/
 ## 10. Troubleshooting
 
 ### Port Conflicts
-If port `8080`, `5173`, `5432`, or `6379` is already in use by another application:
-* Modify the host port mappings in `docker-compose.yml` (e.g. `"5433:5432"` for PostgreSQL).
+If port `8080`, `5173`, `3306`, or `6379` is already in use by another application:
+* Modify the host port mappings in `docker-compose.yml` (e.g. `"5433:3306"` for MySQL).
 
 ### Checking Service Logs
 To view logs for any individual service:

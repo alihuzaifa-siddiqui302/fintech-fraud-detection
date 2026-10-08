@@ -16,8 +16,8 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
 
-      # ── PostgreSQL (Neon free tier) ─────────────────────────────────────────
-      # Format: postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/dbname?sslmode=require
+      # ── MySQL (Cloud Managed) ───────────────────────────────────────────────
+      # Format: jdbc:mysql://user:pass@host:3306/dbname?useSSL=true
       - key: DATABASE_URL
         sync: false    # set manually in Render dashboard
       - key: DB_USERNAME

@@ -8,7 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,7 +34,7 @@ public class DeviceFingerprint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "user_id", columnDefinition = "CHAR(36)", nullable = false)
     private String userId;
 
     @Column(name = "fingerprint_hash", nullable = false)
@@ -42,11 +42,11 @@ public class DeviceFingerprint {
 
     @CreationTimestamp
     @Column(name = "first_seen", nullable = false, updatable = false)
-    private OffsetDateTime firstSeen;
+    private LocalDateTime firstSeen;
 
     @UpdateTimestamp
     @Column(name = "last_seen", nullable = false)
-    private OffsetDateTime lastSeen;
+    private LocalDateTime lastSeen;
 
     @Column(name = "txn_count", nullable = false)
     private Integer txnCount;

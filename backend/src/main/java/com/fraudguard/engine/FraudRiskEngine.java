@@ -11,7 +11,7 @@ import com.fraudguard.engine.model.RiskEvaluationResult;
 import com.fraudguard.engine.model.RuleResult;
 import com.fraudguard.entity.FraudRule;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class FraudRiskEngine {
     public RiskEvaluationResult evaluate(EnrichedTransactionContext ctx) {
         Objects.requireNonNull(ctx, "EnrichedTransactionContext cannot be null");
 
-        // Load active configured rules from Redis/PostgreSQL
+        // Load active configured rules from Redis/MySQL
         Map<String, FraudRule> activeRules = ruleCacheService.loadActiveRules();
         List<RuleResult> results = new ArrayList<>();
 
@@ -401,7 +401,7 @@ public class FraudRiskEngine {
         // RULE 20: OFF_HOURS_TXN
         // ---------------------------------------------------------------------
         FraudRule offHoursRule = activeRules.get(RuleCode.OFF_HOURS_TXN);
-        int currentUtcHour = OffsetDateTime.now(ZoneOffset.UTC).getHour();
+        int currentUtcHour = LocalDateTime.now(ZoneOffset.UTC).getHour();
         boolean offHoursTriggered = currentUtcHour >= 2 && currentUtcHour < 5;
         results.add(buildResult(
                 offHoursRule,

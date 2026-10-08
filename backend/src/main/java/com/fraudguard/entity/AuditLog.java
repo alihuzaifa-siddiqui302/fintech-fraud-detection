@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +29,7 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "actor_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "actor_id", columnDefinition = "CHAR(36)", nullable = false)
     private String actorId;
 
     @Column(name = "actor_email", nullable = false)
@@ -44,19 +44,19 @@ public class AuditLog {
     @Column(name = "entity_id", nullable = false)
     private String entityId;
 
-    @Column(name = "before_value", columnDefinition = "jsonb")
+    @Column(name = "before_value", columnDefinition = "JSON")
     private String beforeValue;
 
-    @Column(name = "after_value", columnDefinition = "jsonb")
+    @Column(name = "after_value", columnDefinition = "JSON")
     private String afterValue;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 }

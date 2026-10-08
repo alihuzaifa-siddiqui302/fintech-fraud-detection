@@ -2,7 +2,7 @@
 package com.fraudguard.repository;
 
 import com.fraudguard.entity.IpIntelligence;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -20,5 +20,5 @@ public interface IpIntelligenceRepository extends JpaRepository<IpIntelligence, 
      * @param after cache expiration cutoff timestamp
      * @return Optional containing valid cached IpIntelligence or empty if expired/absent
      */
-    Optional<IpIntelligence> findByIpAddressAndFetchedAtAfter(String ipAddress, OffsetDateTime after);
+    Optional<IpIntelligence> findByIpAddressAndFetchedAtAfter(String ipAddress, LocalDateTime after);
 }

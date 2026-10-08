@@ -1,20 +1,22 @@
 version: '3.9'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: fraudguard-postgres
+  mysql:
+    image: mysql:8.0
+    container_name: fraudguard-mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: fraudguard_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: fraudguard_db
+      MYSQL_USER: fraudguard
+      MYSQL_PASSWORD: ${DB_PASSWORD:-fraudguard}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     ports:
-      - "5432:5432"
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -77,17 +79,18 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
       kafka:
         condition: service_healthy
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: fraudguard_db
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-root}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_SERVERS: kafka:29092
@@ -119,7 +122,7 @@ services:
       - backend
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
   zookeeper_data:
   kafka_data:

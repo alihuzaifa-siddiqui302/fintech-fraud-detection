@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public class TransactionRuleHit {
 
     @Id
-    @Column(name = "transaction_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "transaction_id", columnDefinition = "CHAR(36)", nullable = false)
     private String transactionId;
 
     @Id
@@ -38,6 +38,6 @@ public class TransactionRuleHit {
     @Column(name = "observed_value", precision = 15, scale = 2)
     private BigDecimal observedValue;
 
-    @Column(name = "trigger_reason", columnDefinition = "text")
+    @Column(name = "trigger_reason", columnDefinition = "TEXT")
     private String triggerReason;
 }

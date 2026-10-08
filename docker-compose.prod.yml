@@ -1,27 +1,22 @@
-# ==============================================================================
-# FraudGuard — Production Docker Compose
-# Use: docker compose -f docker-compose.prod.yml up -d --build
-# All secrets injected via .env file or host environment — no hardcoded values
-# ==============================================================================
+version: '3.9'
 
 services:
-
-  # ── Local Infrastructure (use managed cloud equivalents in full production) ──
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: fraudguard-postgres
-    restart: unless-stopped
+  mysql:
+    image: mysql:8.0
+    container_name: fraudguard-mysql
+    restart: always
     environment:
-      POSTGRES_DB: fraudguard_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: fraudguard_db
+      MYSQL_USER: fraudguard
+      MYSQL_PASSWORD: ${DB_PASSWORD:-fraudguard}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     ports:
-      - "5432:5432"
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,8 +24,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: fraudguard-redis
-    restart: unless-stopped
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    restart: always
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
@@ -44,7 +39,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: fraudguard-zookeeper
-    restart: unless-stopped
+    restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -54,7 +49,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: fraudguard-kafka
-    restart: unless-stopped
+    restart: always
     depends_on:
       - zookeeper
     ports:
@@ -62,31 +57,29 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-    volumes:
-      - kafka_data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-
-  # ── Application Services ────────────────────────────────────────────────────
+    volumes:
+      - kafka_data:/var/lib/kafka/data
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fraudguard-backend
-    restart: unless-stopped
+    restart: always
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -94,63 +87,37 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      # PostgreSQL
-      DATABASE_URL: jdbc:postgresql://postgres:5432/fraudguard_db?sslmode=disable
-      DB_USERNAME: postgres
-      DB_PASSWORD: ${DB_PASSWORD}
-      # Redis
-      REDIS_URL: redis://redis:6379
-      REDIS_SSL_ENABLED: "false"
-      # Kafka
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      KAFKA_SECURITY_PROTOCOL: PLAINTEXT
-      KAFKA_KEY: ""
-      KAFKA_SECRET: ""
-      # Auth & Security
+      # MySQL
+      DATABASE_URL: jdbc:mysql://mysql:3306/fraudguard_db?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
       JWT_SECRET: ${JWT_SECRET}
-      # External APIs
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       IPQS_API_KEY: ${IPQS_API_KEY:-}
-      # Email / OTP
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
       MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
       MAIL_PORT: ${MAIL_PORT:-2525}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       OTP_ENABLED: ${OTP_ENABLED:-true}
-      # CORS
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
-    deploy:
-      resources:
-        limits:
-          memory: 512m
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     container_name: fraudguard-frontend
-    restart: unless-stopped
+    restart: always
     ports:
-      - "5173:80"
+      - "80:80"
     depends_on:
-      backend:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 64m
+      - backend
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
   zookeeper_data:
   kafka_data:

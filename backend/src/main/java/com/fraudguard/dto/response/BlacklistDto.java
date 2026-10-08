@@ -1,7 +1,7 @@
 // com.fraudguard.dto.response.BlacklistDto
 package com.fraudguard.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
  * Representation of a blacklist record for analyst management.
@@ -19,5 +19,5 @@ public record BlacklistDto(
     String targetValue,
     String reason,
     String addedByEmail,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 ) {}

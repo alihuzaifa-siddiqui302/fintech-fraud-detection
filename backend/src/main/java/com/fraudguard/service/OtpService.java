@@ -20,7 +20,7 @@ import com.fraudguard.repository.TransactionRepository;
 import com.fraudguard.repository.TransactionRuleHitRepository;
 import com.fraudguard.repository.UserRepository;
 import java.security.SecureRandom;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +92,7 @@ public class OtpService {
         // Generate 6-digit zero-padded OTP using cryptographically secure random generator
         String rawOtp = generateOtp();
         String otpHash = passwordEncoder.encode(rawOtp);
-        OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(expiryMinutes > 0 ? expiryMinutes : 5);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expiryMinutes > 0 ? expiryMinutes : 5);
 
         OtpChallenge challenge = OtpChallenge.builder()
                 .transactionId(txn.getId())
@@ -181,7 +181,7 @@ public class OtpService {
         }
 
         OtpChallenge challenge = activeChallengeOpt.get();
-        OffsetDateTime now = OffsetDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         // 1. Check challenge expiration
         if (now.isAfter(challenge.getExpiresAt())) {
@@ -277,7 +277,7 @@ public class OtpService {
                 savedTxn.getIsVpn() != null && savedTxn.getIsVpn(),
                 savedTxn.getIsTor() != null && savedTxn.getIsTor(),
                 List.of(),
-                OffsetDateTime.now(),
+                LocalDateTime.now(),
                 "TXN_DECIDED"
         ));
 
@@ -349,7 +349,7 @@ public class OtpService {
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void expireStaleOtps() {
-        OffsetDateTime now = OffsetDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         List<OtpChallenge> expiredChallenges = otpChallengeRepository.findByStatusAndExpiresAtBefore("PENDING", now);
 
         if (expiredChallenges.isEmpty()) {
