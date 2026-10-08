@@ -17,6 +17,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Minimize2,
   Crosshair,
   Radar,
   GitFork,
@@ -26,6 +27,11 @@ import {
   ShieldCheck,
   Eye,
   Filter,
+  X,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  Layers,
 } from 'lucide-react';
 import { getGraph, addBlacklist } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
@@ -63,6 +69,10 @@ export const FraudGraph = () => {
   const [activeLayout, setActiveLayout] = useState('cola'); // 'cola', 'concentric', 'breadthfirst'
   const [canvasFilter, setCanvasFilter] = useState('');
   const [hoveredNode, setHoveredNode] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Graph Data & Status
   const [loading, setLoading] = useState(false);
@@ -144,11 +154,12 @@ export const FraudGraph = () => {
       name: 'cola',
       animate: true,
       randomize: false,
-      maxSimulationTime: 2500,
-      nodeSpacing: 60,
-      edgeLengthVal: 140,
-      padding: 50,
+      maxSimulationTime: 3000,
+      nodeSpacing: 100,
+      edgeLengthVal: 220,
+      padding: 60,
       fit: true,
+      avoidOverlap: true,
     };
 
     if (layoutName === 'concentric') {
@@ -156,7 +167,8 @@ export const FraudGraph = () => {
         name: 'concentric',
         animate: true,
         animationDuration: 800,
-        padding: 50,
+        padding: 60,
+        minNodeSpacing: 80,
         fit: true,
         concentric: (node) => {
           if (node.data('type') === 'USER') return 3;
@@ -171,8 +183,8 @@ export const FraudGraph = () => {
         animate: true,
         animationDuration: 800,
         directed: true,
-        spacingFactor: 1.3,
-        padding: 50,
+        spacingFactor: 1.6,
+        padding: 60,
         fit: true,
       };
     }
@@ -188,7 +200,7 @@ export const FraudGraph = () => {
     // Transform API elements to Cytoscape format with futuristic styling tokens
     const cyNodes = (graphData.nodes || []).map((node) => {
       let nodeShape = 'ellipse';
-      let nodeSize = 46;
+      let nodeSize = 52;
       let bgColor = '#64748b';
       let borderColor = node.isBlacklisted ? '#ef4444' : '#1e293b';
       let borderWidth = node.isBlacklisted ? 4 : 2.5;
@@ -201,25 +213,25 @@ export const FraudGraph = () => {
         nodeShape = 'ellipse';
         iconSvg = USER_ICON_SVG;
         const txnCount = (node.data && node.data.totalTransactions) || 1;
-        nodeSize = Math.min(74, Math.max(46, 46 + txnCount * 2));
+        nodeSize = Math.min(84, Math.max(54, 54 + txnCount * 2.5));
 
         if (node.riskLevel === 'HIGH') {
           bgColor = '#ef4444';
           shadowColor = '#ef4444';
-          shadowBlur = 24;
-          shadowOpacity = 0.85;
+          shadowBlur = 30;
+          shadowOpacity = 0.9;
           borderColor = '#b91c1c';
         } else if (node.riskLevel === 'MEDIUM') {
           bgColor = '#f59e0b';
           shadowColor = '#f59e0b';
-          shadowBlur = 18;
-          shadowOpacity = 0.8;
+          shadowBlur = 22;
+          shadowOpacity = 0.85;
           borderColor = '#d97706';
         } else if (node.riskLevel === 'LOW') {
           bgColor = '#10b981';
           shadowColor = '#10b981';
-          shadowBlur = 14;
-          shadowOpacity = 0.7;
+          shadowBlur = 18;
+          shadowOpacity = 0.75;
           borderColor = '#059669';
         } else {
           bgColor = '#64748b';
@@ -228,43 +240,43 @@ export const FraudGraph = () => {
         nodeShape = 'diamond';
         iconSvg = IP_ICON_SVG;
         const txnCount = (node.data && node.data.transactionCount) || 1;
-        nodeSize = Math.min(62, Math.max(38, 38 + txnCount * 1.5));
+        nodeSize = Math.min(70, Math.max(46, 46 + txnCount * 2));
         bgColor = '#0284c7'; // Electric cyan / sky
 
         if (node.data && (node.data.isVpn || node.data.isTor)) {
           borderColor = '#ef4444';
           borderWidth = 3.5;
           shadowColor = '#ef4444';
-          shadowBlur = 20;
-          shadowOpacity = 0.85;
+          shadowBlur = 24;
+          shadowOpacity = 0.9;
         } else {
           shadowColor = '#0ea5e9';
-          shadowBlur = 12;
-          shadowOpacity = 0.65;
+          shadowBlur = 16;
+          shadowOpacity = 0.7;
         }
       } else if (node.type === 'DEVICE') {
         nodeShape = 'round-rectangle';
         iconSvg = DEVICE_ICON_SVG;
         const sharedCount = (node.data && node.data.sharedAcrossAccounts) || 1;
-        nodeSize = Math.min(66, Math.max(40, 40 + sharedCount * 6));
+        nodeSize = Math.min(76, Math.max(48, 48 + sharedCount * 6));
 
         if (sharedCount > 2) {
           bgColor = '#ef4444';
           shadowColor = '#ef4444';
-          shadowBlur = 25;
-          shadowOpacity = 0.9;
+          shadowBlur = 30;
+          shadowOpacity = 0.95;
           borderColor = '#fee2e2';
         } else if (sharedCount > 1) {
           bgColor = '#f97316';
           shadowColor = '#f97316';
-          shadowBlur = 20;
-          shadowOpacity = 0.85;
+          shadowBlur = 24;
+          shadowOpacity = 0.88;
           borderColor = '#ffedd5';
         } else {
           bgColor = '#8b5cf6'; // Vivid violet
           shadowColor = '#8b5cf6';
-          shadowBlur = 14;
-          shadowOpacity = 0.7;
+          shadowBlur = 18;
+          shadowOpacity = 0.75;
           borderColor = '#c4b5fd';
         }
       }
@@ -468,10 +480,11 @@ export const FraudGraph = () => {
       cy.elements().removeClass('dimmed').removeClass('highlighted');
     });
 
-    // Node selection handler
+    // Node selection handler - open floating dossier
     cy.on('tap', 'node', (evt) => {
       const nodeData = evt.target.data('rawNode');
       setSelectedNode(nodeData);
+      setIsDossierOpen(true);
     });
 
     // Double-tap on USER node: expand graph with depth=2
@@ -489,6 +502,7 @@ export const FraudGraph = () => {
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
+        setIsDossierOpen(false);
       }
     });
 
@@ -501,6 +515,27 @@ export const FraudGraph = () => {
       }
     };
   }, [graphData, applyLayout]);
+
+  // Handle window resizing to keep Cytoscape viewport crisp & responsive
+  useEffect(() => {
+    const handleResize = () => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
+    setTimeout(() => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+        cyRef.current.fit(null, 50);
+      }
+    }, 150);
+  };
 
   // Handle Search Submission
   const handleBuildGraph = (e) => {
@@ -668,360 +703,401 @@ export const FraudGraph = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-2rem)] p-4 md:p-6 overflow-hidden">
-      {/* HEADER & CONTROLS BAR */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 backdrop-blur-md shadow-2xl flex-shrink-0 relative overflow-hidden">
-        {/* Subtle cyber background line accent */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-80" />
+    <div
+      className={clsx(
+        'flex flex-col transition-all duration-200 overflow-hidden',
+        isFullscreen
+          ? 'fixed inset-0 z-50 bg-slate-950 p-2 sm:p-3'
+          : 'flex-1 h-full w-full min-h-0 p-1 sm:p-2'
+      )}
+    >
+      {/* COMPACT CYBER SOC HEADER & STATS BAR */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 mb-2 backdrop-blur-md shadow-2xl flex-shrink-0 relative overflow-hidden">
+        {/* Neon accent cyber line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-90" />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-3">
-          <div className="flex items-center gap-3">
-            <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-brand-400 shadow-inner">
-              <Network className="w-5 h-5 animate-pulse" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand-400 ring-2 ring-slate-900 animate-ping" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Left: Title & Live SOC pill */}
+          <div className="flex items-center gap-2.5">
+            <div className="relative p-2 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-brand-400 shadow-inner">
+              <Network className="w-4 h-4 animate-pulse" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand-400 ring-2 ring-slate-900 animate-ping" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-white tracking-tight">
+                <h1 className="text-sm sm:text-base font-bold text-white tracking-tight">
                   Fraud Syndicate Link Graph
                 </h1>
-                <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 font-bold tracking-wider">
+                <span className="text-[9px] uppercase px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 font-bold tracking-wider">
                   Live SOC Topology
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Multi-actor link analysis correlating shared device fingerprints, IP proxy clusters, and synthetic identities.
+              <p className="text-[11px] text-slate-400 hidden md:block">
+                Multi-actor link analysis correlating shared device fingerprints, IP clusters, and synthetic identities.
               </p>
             </div>
           </div>
 
-          {/* Stats Pills */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 flex items-center gap-1.5 font-medium shadow-sm">
+          {/* Center: Live Stats Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <div className="px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 flex items-center gap-1.5 font-medium shadow-sm">
               <span className="w-2 h-2 rounded-full bg-indigo-400" />
               <span className="font-bold text-white">{stats.totalNodes}</span> nodes
             </div>
-            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 flex items-center gap-1.5 font-medium shadow-sm">
+            <div className="px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 flex items-center gap-1.5 font-medium shadow-sm">
               <span className="w-2 h-2 rounded-full bg-slate-400" />
               <span className="font-bold text-white">{stats.totalEdges}</span> links
             </div>
-            <div className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 flex items-center gap-1.5 font-semibold shadow-sm">
+            <div className="px-2.5 py-1 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 flex items-center gap-1.5 font-semibold shadow-sm">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
               <span>{stats.highRiskNodes} high risk</span>
             </div>
             {stats.sharedDeviceConnections > 0 && (
-              <div className="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 flex items-center gap-1.5 font-bold shadow-lg shadow-purple-900/20 animate-pulse">
+              <div className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 flex items-center gap-1.5 font-bold shadow-lg shadow-purple-900/20 animate-pulse">
                 <Smartphone className="w-3.5 h-3.5 text-purple-400" />
                 <span>{stats.sharedDeviceConnections} shared devices</span>
               </div>
             )}
             {stats.blacklistedNodes > 0 && (
-              <div className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 flex items-center gap-1.5 font-semibold">
+              <div className="px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 flex items-center gap-1.5 font-semibold">
                 <Ban className="w-3.5 h-3.5 text-rose-400" />
                 <span>{stats.blacklistedNodes} blacklisted</span>
               </div>
             )}
           </div>
-        </div>
 
-        {/* INPUTS & FILTERS ROW */}
-        <form onSubmit={handleBuildGraph} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 pt-2.5 border-t border-slate-800/80 text-xs">
-          {/* Seed User ID */}
-          <div className="lg:col-span-2">
-            <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed User ID / UUID</label>
-            <input
-              type="text"
-              placeholder="e.g. user_104"
-              value={seedUserId}
-              onChange={(e) => setSeedUserId(e.target.value)}
-              className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-
-          {/* Seed IP Address */}
-          <div className="lg:col-span-2">
-            <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed IP Address</label>
-            <input
-              type="text"
-              placeholder="e.g. 185.220.101.45"
-              value={seedIpAddress}
-              onChange={(e) => setSeedIpAddress(e.target.value)}
-              className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-
-          {/* Seed Fingerprint */}
-          <div className="lg:col-span-2">
-            <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed Device Fingerprint</label>
-            <input
-              type="text"
-              placeholder="e.g. a6029fd..."
-              value={seedFingerprint}
-              onChange={(e) => setSeedFingerprint(e.target.value)}
-              className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-
-          {/* Date Range Presets */}
-          <div className="lg:col-span-2">
-            <label className="block text-[11px] font-medium text-slate-400 mb-1">Time Horizon</label>
-            <div className="flex rounded-lg bg-slate-950/90 p-0.5 border border-slate-700/70">
+          {/* Right: Quick Horizon, Filter Toggle & Fullscreen */}
+          <div className="flex items-center gap-2">
+            {/* Horizon Pills */}
+            <div className="hidden sm:flex rounded-lg bg-slate-950/90 p-0.5 border border-slate-700/70">
               {['24h', '7d', '30d'].map((preset) => (
                 <button
                   key={preset}
                   type="button"
-                  onClick={() => setDateRangePreset(preset)}
+                  onClick={() => {
+                    setDateRangePreset(preset);
+                    fetchGraphData({ dateRangePreset: preset });
+                  }}
                   className={clsx(
-                    'flex-1 py-1 rounded-md text-[11px] font-semibold transition-all duration-150',
+                    'px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all duration-150',
                     dateRangePreset === preset
                       ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/30'
                       : 'text-slate-400 hover:text-slate-200'
                   )}
                 >
-                  {preset === '24h' ? '24h' : preset === '7d' ? '7 Days' : '30 Days'}
+                  {preset === '24h' ? '24h' : preset === '7d' ? '7D' : '30D'}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Max Nodes Slider */}
-          <div className="lg:col-span-2">
-            <div className="flex justify-between text-[11px] font-medium text-slate-400 mb-1">
-              <span>Max Graph Nodes</span>
-              <span className="text-brand-400 font-mono font-bold">{maxNodes}</span>
-            </div>
-            <input
-              type="range"
-              min="20"
-              max="150"
-              step="10"
-              value={maxNodes}
-              onChange={(e) => setMaxNodes(parseInt(e.target.value, 10))}
-              className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-brand-500 mt-1"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="lg:col-span-2 flex items-end gap-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-600 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md shadow-brand-500/20 active:scale-95"
-            >
-              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-              <span>Build Graph</span>
-            </button>
+            {/* Filter Drawer Toggle */}
             <button
               type="button"
-              onClick={handleReset}
-              disabled={loading}
-              title="Reset Filters"
-              className="p-1.5 rounded-lg border border-slate-700/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              onClick={() => {
+                setShowFilters((prev) => !prev);
+                setTimeout(() => {
+                  if (cyRef.current) cyRef.current.resize();
+                }, 100);
+              }}
+              className={clsx(
+                'py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm',
+                showFilters || seedUserId || seedIpAddress || seedFingerprint
+                  ? 'bg-brand-500/20 border-brand-500/50 text-brand-300'
+                  : 'border-slate-700/80 hover:bg-slate-800 text-slate-300'
+              )}
             >
-              <RotateCcw className="w-4 h-4" />
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filters</span>
+              {showFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
-          </div>
-        </form>
-      </div>
 
-      {/* MAIN CONTENT AREA: GRAPH (70%) + DETAIL PANEL (30%) */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
-        {/* GRAPH CANVAS WRAPPER */}
-        <div className="flex-1 relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]">
-          {/* Subtle cyber scanlines overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/60 pointer-events-none z-0" />
+            {/* Refresh / Re-query */}
+            <button
+              type="button"
+              onClick={() => fetchGraphData()}
+              disabled={loading}
+              title="Refresh Graph"
+              className="p-1.5 rounded-lg border border-slate-700/80 hover:bg-slate-800 text-slate-300 transition-colors"
+            >
+              <RotateCcw className={clsx('w-3.5 h-3.5', loading && 'animate-spin text-brand-400')} />
+            </button>
 
-          {/* FLOATING TOP CANVAS TOOLBAR: ZOOM, LAYOUTS & QUICK FIND */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-            {/* Left Tools: Zoom, Center & Focus */}
-            <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-xl p-1 backdrop-blur-md shadow-xl pointer-events-auto">
-              <button
-                onClick={handleZoomIn}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleZoomOut}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-4 h-4" />
-              </button>
-              <div className="w-px h-4 bg-slate-800 mx-0.5" />
-              <button
-                onClick={handleFit}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
-                title="Fit to Screen"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-              <div className="w-px h-4 bg-slate-800 mx-0.5" />
-              <button
-                onClick={handleFocusHighRisk}
-                className="px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                title="Fly camera to high-risk actors"
-              >
-                <Crosshair className="w-3.5 h-3.5 text-red-400" />
-                <span>Focus Risk</span>
-              </button>
-            </div>
-
-            {/* Center Tools: High-Tech Layout Switcher */}
-            <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-xl p-1 backdrop-blur-md shadow-xl pointer-events-auto">
-              <button
-                onClick={() => handleLayoutChange('cola')}
-                className={clsx(
-                  'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
-                  activeLayout === 'cola'
-                    ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                )}
-                title="Force-directed physics simulation"
-              >
-                <Radio className="w-3.5 h-3.5" />
-                <span>Physics</span>
-              </button>
-              <button
-                onClick={() => handleLayoutChange('concentric')}
-                className={clsx(
-                  'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
-                  activeLayout === 'concentric'
-                    ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                )}
-                title="Concentric radar rings"
-              >
-                <Radar className="w-3.5 h-3.5" />
-                <span>Radar</span>
-              </button>
-              <button
-                onClick={() => handleLayoutChange('breadthfirst')}
-                className={clsx(
-                  'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
-                  activeLayout === 'breadthfirst'
-                    ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                )}
-                title="Hierarchical attack tree"
-              >
-                <GitFork className="w-3.5 h-3.5" />
-                <span>Tree</span>
-              </button>
-            </div>
-
-            {/* Right Tools: Canvas Filter / Quick Search */}
-            <div className="relative pointer-events-auto hidden sm:block">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Find node on canvas..."
-                value={canvasFilter}
-                onChange={(e) => handleCanvasSearch(e.target.value)}
-                className="bg-slate-900/90 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-44 backdrop-blur-md shadow-xl"
-              />
-            </div>
-          </div>
-
-          {/* Cytoscape Canvas Container */}
-          <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing relative z-0" />
-
-          {/* Loading Overlay */}
-          {loading && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center z-20">
-              <div className="relative mb-4">
-                <Loader2 className="w-12 h-12 text-brand-400 animate-spin" />
-                <div className="absolute inset-0 rounded-full border-2 border-brand-500/40 animate-ping" />
-              </div>
-              <p className="text-sm font-bold text-white tracking-wide">Synthesizing Fraud Link Graph...</p>
-              <p className="text-xs text-slate-400 mt-1 font-mono">Running topological correlation across devices, IPs & accounts</p>
-            </div>
-          )}
-
-          {/* Empty State Overlay */}
-          {!loading && graphData && (!graphData.nodes || graphData.nodes.length === 0) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
-              <div className="p-4 rounded-full bg-slate-900 border border-slate-800 mb-3 text-slate-500 shadow-xl">
-                <Network className="w-10 h-10 opacity-30" />
-              </div>
-              <h3 className="text-base font-bold text-slate-200 mb-1">No Correlated Links Found</h3>
-              <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                No connected entities matched the seed parameters. Try expanding the time horizon to 30 days or removing seed restrictions.
-              </p>
-            </div>
-          )}
-
-          {/* Graph Legend Floating Card */}
-          <div className="absolute bottom-4 left-4 z-10 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3.5 backdrop-blur-md shadow-2xl text-[11px] space-y-2 select-none">
-            <span className="font-bold text-slate-400 uppercase tracking-wider block text-[10px]">
-              SOC Topology Legend
-            </span>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              <div className="flex items-center gap-2 text-slate-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
-                <span>High Risk User</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
-                <span>Medium Risk User</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
-                <span>Low Risk User</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <span className="w-2.5 h-2.5 bg-sky-500 rotate-45 transform shadow-sm shadow-sky-500/50" />
-                <span>IP Address</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <span className="w-3 h-2 rounded bg-purple-500 shadow-sm shadow-purple-500/50" />
-                <span>Device Fingerprint</span>
-              </div>
-              <div className="flex items-center gap-2 text-red-400 font-bold">
-                <span className="w-4 h-1 bg-red-500 rounded shadow-sm shadow-red-500/80 animate-pulse" />
-                <span>Shared Device (Ring!)</span>
-              </div>
-            </div>
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              className="p-1.5 rounded-lg border border-slate-700/80 hover:bg-slate-800 text-slate-300 transition-colors"
+              title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-brand-400" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
 
-        {/* RIGHT PANEL: FORENSIC DOSSIER & ENTITY INSPECTOR (30%) */}
-        <div className="w-full lg:w-96 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between overflow-y-auto shadow-2xl flex-shrink-0">
-          {!selectedNode ? (
-            /* DEFAULT EMPTY INSPECTION STATE */
-            <div className="h-full flex flex-col justify-center items-center text-center p-4 text-slate-400">
-              <div className="relative mb-4">
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-brand-400 shadow-xl">
-                  <Eye className="w-8 h-8" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-brand-500 text-slate-950">
-                  <Sparkles className="w-3 h-3" />
-                </div>
+        {/* COLLAPSIBLE FILTER DRAWER */}
+        {showFilters && (
+          <form
+            onSubmit={(e) => {
+              handleBuildGraph(e);
+              setShowFilters(false);
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 pt-3 mt-2.5 border-t border-slate-800 text-xs animate-in fade-in slide-in-from-top-2"
+          >
+            <div className="lg:col-span-3">
+              <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed User ID / UUID</label>
+              <input
+                type="text"
+                placeholder="e.g. user_104"
+                value={seedUserId}
+                onChange={(e) => setSeedUserId(e.target.value)}
+                className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="lg:col-span-3">
+              <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed IP Address</label>
+              <input
+                type="text"
+                placeholder="e.g. 185.220.101.45"
+                value={seedIpAddress}
+                onChange={(e) => setSeedIpAddress(e.target.value)}
+                className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="lg:col-span-3">
+              <label className="block text-[11px] font-medium text-slate-400 mb-1">Seed Device Fingerprint</label>
+              <input
+                type="text"
+                placeholder="e.g. a6029fd..."
+                value={seedFingerprint}
+                onChange={(e) => setSeedFingerprint(e.target.value)}
+                className="w-full bg-slate-950/90 border border-slate-700/70 rounded-lg px-2.5 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <div className="flex justify-between text-[11px] font-medium text-slate-400 mb-1">
+                <span>Max Nodes</span>
+                <span className="text-brand-400 font-mono font-bold">{maxNodes}</span>
               </div>
-              <h3 className="text-base font-bold text-white mb-1">Forensic Entity Dossier</h3>
-              <p className="text-xs text-slate-400 max-w-xs mb-5 leading-relaxed">
-                Click any node on the graph to inspect device hashes, threat intelligence flags, and multi-accounting confederates.
-              </p>
-              <div className="w-full p-4 rounded-xl bg-slate-950/70 border border-slate-800 text-left text-xs space-y-2.5">
-                <span className="text-[10px] uppercase font-bold text-brand-400 tracking-wider block">
-                  Interactive Features
+              <input
+                type="range"
+                min="20"
+                max="150"
+                step="10"
+                value={maxNodes}
+                onChange={(e) => setMaxNodes(parseInt(e.target.value, 10))}
+                className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-brand-500 mt-2"
+              />
+            </div>
+            <div className="lg:col-span-2 flex items-end gap-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-600 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md shadow-brand-500/20 active:scale-95"
+              >
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                <span>Build Graph</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={loading}
+                title="Reset Filters"
+                className="p-1.5 rounded-lg border border-slate-700/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* FULL-BLEED GRAPH CANVAS CONTAINER */}
+      <div className="flex-1 relative w-full h-full min-h-0 bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]">
+        {/* Subtle cyber background ambient vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/60 pointer-events-none z-0" />
+
+        {/* FLOATING TOP COMMAND HUD BAR: ZOOM, CENTER, LAYOUTS & QUICK SEARCH */}
+        <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+          {/* Left HUD: Zoom, Center & Focus High Risk */}
+          <div className="flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-xl p-1 backdrop-blur-xl shadow-2xl pointer-events-auto">
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-slate-800 mx-0.5" />
+            <button
+              onClick={handleFit}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Fit to Screen"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-slate-800 mx-0.5" />
+            <button
+              onClick={handleFocusHighRisk}
+              className="px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Focus high-risk actors"
+            >
+              <Crosshair className="w-3.5 h-3.5 text-red-400" />
+              <span>Focus Risk</span>
+            </button>
+          </div>
+
+          {/* Center HUD: High-Tech Topology Layout Switcher */}
+          <div className="flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-xl p-1 backdrop-blur-xl shadow-2xl pointer-events-auto">
+            <button
+              onClick={() => handleLayoutChange('cola')}
+              className={clsx(
+                'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
+                activeLayout === 'cola'
+                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              )}
+              title="Force-directed physics simulation"
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Physics</span>
+            </button>
+            <button
+              onClick={() => handleLayoutChange('concentric')}
+              className={clsx(
+                'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
+                activeLayout === 'concentric'
+                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              )}
+              title="Concentric radar rings"
+            >
+              <Radar className="w-3.5 h-3.5" />
+              <span>Radar</span>
+            </button>
+            <button
+              onClick={() => handleLayoutChange('breadthfirst')}
+              className={clsx(
+                'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
+                activeLayout === 'breadthfirst'
+                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/40'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              )}
+              title="Hierarchical attack tree"
+            >
+              <GitFork className="w-3.5 h-3.5" />
+              <span>Tree</span>
+            </button>
+          </div>
+
+          {/* Right HUD: Quick Node Search on Canvas */}
+          <div className="relative pointer-events-auto hidden sm:block">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Find node on canvas..."
+              value={canvasFilter}
+              onChange={(e) => handleCanvasSearch(e.target.value)}
+              className="bg-slate-900/95 border border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-44 backdrop-blur-xl shadow-2xl"
+            />
+          </div>
+        </div>
+
+        {/* Cytoscape Canvas Container (100% full bleed) */}
+        <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing relative z-0" />
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center z-20">
+            <div className="relative mb-4">
+              <Loader2 className="w-12 h-12 text-brand-400 animate-spin" />
+              <div className="absolute inset-0 rounded-full border-2 border-brand-500/40 animate-ping" />
+            </div>
+            <p className="text-sm font-bold text-white tracking-wide">Synthesizing Fraud Link Graph...</p>
+            <p className="text-xs text-slate-400 mt-1 font-mono">Running topological correlation across devices, IPs & accounts</p>
+          </div>
+        )}
+
+        {/* Empty State Overlay */}
+        {!loading && graphData && (!graphData.nodes || graphData.nodes.length === 0) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
+            <div className="p-4 rounded-full bg-slate-900 border border-slate-800 mb-3 text-slate-500 shadow-xl">
+              <Network className="w-10 h-10 opacity-30" />
+            </div>
+            <h3 className="text-base font-bold text-slate-200 mb-1">No Correlated Links Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+              No connected entities matched the seed parameters. Try expanding the time horizon or clearing seed restrictions.
+            </p>
+          </div>
+        )}
+
+        {/* COLLAPSIBLE GRAPH LEGEND FLOATING PILL / POPUP */}
+        <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 select-none">
+          {showLegend && (
+            <div className="bg-slate-900/95 border border-slate-700/80 rounded-2xl p-3.5 backdrop-blur-xl shadow-2xl text-[11px] space-y-2 animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-800 pb-1.5">
+                <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-brand-400" />
+                  SOC Topology Legend
                 </span>
-                <p className="text-slate-300 leading-relaxed">
-                  • <strong>Hover</strong> any entity to spotlight its direct network neighborhood and dim background noise.
-                </p>
-                <p className="text-slate-300 leading-relaxed">
-                  • <strong>Double-click</strong> a User node to dynamically query and append its 2-hop connection web.
-                </p>
-                <p className="text-slate-300 leading-relaxed">
-                  • Use the <strong>Radar / Tree</strong> layout buttons above to reveal topological hierarchy.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowLegend(false)}
+                  className="text-slate-400 hover:text-white p-0.5 rounded hover:bg-slate-800"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
+                  <span>High Risk User</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
+                  <span>Medium Risk User</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+                  <span>Low Risk User</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span className="w-2.5 h-2.5 bg-sky-500 rotate-45 transform shadow-sm shadow-sky-500/50" />
+                  <span>IP Address</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span className="w-3 h-2 rounded bg-purple-500 shadow-sm shadow-purple-500/50" />
+                  <span>Device Fingerprint</span>
+                </div>
+                <div className="flex items-center gap-2 text-red-400 font-bold">
+                  <span className="w-4 h-1 bg-red-500 rounded shadow-sm shadow-red-500/80 animate-pulse" />
+                  <span>Shared Device (Ring!)</span>
+                </div>
               </div>
             </div>
-          ) : (
-            /* SELECTED ENTITY DETAIL VIEW */
+          )}
+          <button
+            type="button"
+            onClick={() => setShowLegend((prev) => !prev)}
+            className="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 rounded-xl px-3 py-1.5 backdrop-blur-md shadow-xl text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <Layers className="w-3.5 h-3.5 text-brand-400" />
+            <span>Legend</span>
+            {showLegend ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
+          </button>
+        </div>
+
+        {/* FLOATING SLIDE-OVER FORENSIC ENTITY DOSSIER */}
+        {isDossierOpen && selectedNode && (
+          <div className="absolute top-3 right-3 bottom-3 w-80 sm:w-96 lg:w-[420px] max-w-[calc(100vw-2.5rem)] bg-slate-900/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl p-5 flex flex-col justify-between overflow-y-auto shadow-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-right-4">
             <div className="space-y-4">
-              {/* Type Badge & Header */}
+              {/* Type Badge, Header & Close Button */}
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <span
@@ -1036,15 +1112,25 @@ export const FraudGraph = () => {
                   >
                     {selectedNode.type} Entity
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">Dossier</span>
+                  {selectedNode.isBlacklisted && (
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold flex items-center gap-1 animate-pulse">
+                      <Ban className="w-3 h-3" />
+                      Blacklisted
+                    </span>
+                  )}
                 </div>
 
-                {selectedNode.isBlacklisted && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold flex items-center gap-1 animate-pulse">
-                    <Ban className="w-3 h-3" />
-                    Blacklisted
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDossierOpen(false);
+                    setSelectedNode(null);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                  title="Close Dossier"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               {/* USER ENTITY INSPECTOR */}
@@ -1306,8 +1392,8 @@ export const FraudGraph = () => {
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* QUICK BLACKLIST MODAL */}
