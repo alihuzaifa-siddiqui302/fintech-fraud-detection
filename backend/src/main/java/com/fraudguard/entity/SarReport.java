@@ -31,13 +31,13 @@ public class SarReport {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "transaction_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "transaction_id", length = 36, nullable = false)
     private String transactionId;
 
-    @Column(name = "generated_by", columnDefinition = "uuid", nullable = false)
+    @Column(name = "generated_by", length = 36, nullable = false)
     private String generatedBy;
 
     @Column(name = "report_text", columnDefinition = "text", nullable = false)
@@ -63,7 +63,7 @@ public class SarReport {
     @Column(name = "filed_at")
     private OffsetDateTime filedAt;
 
-    @Column(name = "filed_by", columnDefinition = "uuid")
+    @Column(name = "filed_by", length = 36)
     private String filedBy;
 
     @Column(columnDefinition = "text")

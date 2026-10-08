@@ -7,6 +7,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2.5-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?style=flat&logo=react&logoColor=black)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat&logo=mysql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis&logoColor=white)
 ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-7.4-231F20?style=flat&logo=apachekafka&logoColor=white)
 ![Gemini AI](https://img.shields.io/badge/Gemini_AI-2.5_Flash-4285F4?style=flat&logo=google&logoColor=white)
@@ -160,6 +161,46 @@ Once the containers start up, access the platform in your browser:
 To stop the containers at any time:
 ```bash
 docker compose down
+```
+
+---
+
+### Dual Database Support (PostgreSQL & MySQL)
+
+> [!IMPORTANT]
+> **PostgreSQL 16 is the recommended and default database for FraudGuard.**
+
+In enterprise-grade financial fraud detection, **PostgreSQL is the industry-preferred choice** for several critical reasons:
+
+| Capability | Why It Matters for Fraud Detection |
+| :--- | :--- |
+| **Native `JSONB` with GIN Indexing** | Fraud telemetry (device fingerprints, behavioral signals, IP intelligence) is semi-structured. PostgreSQL's binary JSON allows **sub-millisecond indexed queries** directly inside JSON payloads — essential for real-time risk scoring. |
+| **Advanced Window Functions & CTEs** | Velocity analysis (card bursts per minute, IP clustering over 24h) requires complex sliding-window aggregations that PostgreSQL handles natively and efficiently. |
+| **Row-Level Security (RLS)** | Multi-tenant fraud platforms can enforce tenant isolation at the database layer, preventing cross-organization data leakage — a regulatory requirement for PCI-DSS and SOC 2 compliance. |
+| **ACID-Compliant Concurrent Writes (MVCC)** | High-throughput payment pipelines demand strict transactional consistency under heavy concurrent load. PostgreSQL's mature MVCC architecture ensures zero lost writes during burst traffic spikes. |
+| **`NOTIFY` / `LISTEN` Pub-Sub** | PostgreSQL's built-in event notification system enables real-time alerting pipelines without external dependencies — ideal for pushing flagged transactions to analyst dashboards instantly. |
+| **Mature Extension Ecosystem** | Extensions like `pg_trgm` (fuzzy matching for name screening), `PostGIS` (geospatial IP correlation), and `pgcrypto` (field-level encryption) are battle-tested in production FinTech environments. |
+| **Regulatory & Audit Compliance** | PostgreSQL's robust Write-Ahead Logging (WAL), point-in-time recovery, and logical replication meet the stringent data durability and audit trail requirements mandated by FinCEN, PCI-DSS, and SOX frameworks. |
+
+Despite PostgreSQL being the recommended choice, FraudGuard ships with **full dual-database support for both PostgreSQL and MySQL 8.0+**. Different fraud detection platforms, payment processors, and financial institutions operate on diverse infrastructure stacks — many legacy banking systems and regional payment gateways are built on MySQL. To ensure FraudGuard integrates seamlessly across these environments, both databases are fully supported with automated Flyway migrations (`V1`–`V6`), dialect-agnostic UUID and JSON entity mapping, and native database triggers.
+
+* **Default (PostgreSQL 16)** — Runs automatically with the `dev` or `prod` profile:
+  ```bash
+  docker compose up --build -d
+  ```
+* **MySQL 8.4 Support** — Activate the `mysql` profile for MySQL-based deployments:
+
+```bash
+# 1. Start the MySQL container:
+docker compose up -d mysql redis kafka zookeeper
+
+# 2. Run backend with MySQL profile:
+cd backend
+mvn spring-boot:run -Dspring-boot.run.profiles=mysql
+
+# 3. (Optional) Seed realistic demo fraud data in MySQL:
+# Using MySQL client / workbench:
+mysql -u root -prootpassword -h 127.0.0.1 -P 3306 fraudguard_db < ../seed_realistic_data_mysql.sql
 ```
 
 ---
@@ -320,9 +361,12 @@ fintech-fraud-detection/
 │   │   ├── security/              # JJWT auth filter & RBAC rules
 │   │   └── service/               # Checkout, Enrichment, Analyst, AI SAR services
 │   ├── src/main/resources/
-│   │   ├── db/migration/          # Flyway schema V1 through V6
+│   │   ├── db/migration/
+│   │   │   ├── postgres/          # Flyway V1–V6 migrations (PostgreSQL 16)
+│   │   │   └── mysql/             # Flyway V1–V6 migrations (MySQL 8.4)
 │   │   ├── application.yml        # Common base configuration & active profile switch
-│   │   ├── application-dev.yml    # Local development profile (Docker containers)
+│   │   ├── application-dev.yml    # Local development profile (Docker / PostgreSQL)
+│   │   ├── application-mysql.yml  # MySQL 8.4 profile (activate with -Dspring-boot.run.profiles=mysql)
 │   │   └── application-prod.yml   # Production profile (Neon, Upstash Redis/Kafka)
 │   ├── Dockerfile                 # Multi-stage Java 21 container build (JRE 21 Alpine)
 │   └── pom.xml                    # Maven dependencies (Java 21, Spring Boot 3.2.5)

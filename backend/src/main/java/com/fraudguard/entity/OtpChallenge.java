@@ -29,13 +29,13 @@ public class OtpChallenge {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "transaction_id", nullable = false, unique = true, columnDefinition = "uuid")
+    @Column(name = "transaction_id", nullable = false, unique = true, length = 36)
     private String transactionId;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "uuid")
+    @Column(name = "user_id", nullable = false, length = 36)
     private String userId;
 
     @Column(name = "otp_hash", nullable = false, length = 255)

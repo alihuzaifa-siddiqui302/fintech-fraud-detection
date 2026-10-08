@@ -28,7 +28,7 @@ public class User {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
     @Column(nullable = false, unique = true)

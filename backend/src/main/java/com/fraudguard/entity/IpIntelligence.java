@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Represents cached intelligence and risk reputation metadata for an evaluated IP address.
@@ -57,7 +59,8 @@ public class IpIntelligence {
     @Column(name = "ipqs_fraud_score")
     private Integer ipqsFraudScore;
 
-    @Column(name = "raw_response", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "raw_response")
     private String rawResponse;
 
     @CreationTimestamp

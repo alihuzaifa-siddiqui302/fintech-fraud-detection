@@ -34,7 +34,7 @@ public class DeviceFingerprint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "user_id", length = 36, nullable = false)
     private String userId;
 
     @Column(name = "fingerprint_hash", nullable = false)

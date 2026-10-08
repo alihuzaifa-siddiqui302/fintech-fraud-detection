@@ -30,7 +30,7 @@ public class SessionSignal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "transaction_id", columnDefinition = "uuid", nullable = false, unique = true)
+    @Column(name = "transaction_id", length = 36, nullable = false, unique = true)
     private String transactionId;
 
     @Column(name = "time_on_page_ms")

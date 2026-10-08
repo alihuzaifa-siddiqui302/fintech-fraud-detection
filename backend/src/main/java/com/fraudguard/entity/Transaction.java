@@ -13,7 +13,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Represents a financial transaction evaluated by the fraud detection pipeline.
@@ -29,10 +31,10 @@ public class Transaction {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "user_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "user_id", length = 36, nullable = false)
     private String userId;
 
     @Column(nullable = false, precision = 15, scale = 2)
@@ -101,10 +103,11 @@ public class Transaction {
     @Column(nullable = false, length = 30)
     private String status;
 
-    @Column(name = "triggered_rules", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "triggered_rules")
     private String triggeredRules;
 
-    @Column(name = "reviewed_by", columnDefinition = "uuid")
+    @Column(name = "reviewed_by", length = 36)
     private String reviewedBy;
 
     @Column(name = "resolution_notes", columnDefinition = "text")

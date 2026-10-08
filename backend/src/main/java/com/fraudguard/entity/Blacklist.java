@@ -42,7 +42,7 @@ public class Blacklist {
     @Column(columnDefinition = "text")
     private String reason;
 
-    @Column(name = "added_by", columnDefinition = "uuid")
+    @Column(name = "added_by", length = 36)
     private String addedBy;
 
     @CreationTimestamp

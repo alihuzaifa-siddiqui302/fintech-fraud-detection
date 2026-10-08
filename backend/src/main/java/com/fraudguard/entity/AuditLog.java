@@ -13,6 +13,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Immutable audit log record capturing administrative, operational, and adjudication actions.
@@ -29,7 +31,7 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "actor_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "actor_id", length = 36, nullable = false)
     private String actorId;
 
     @Column(name = "actor_email", nullable = false)
@@ -44,10 +46,12 @@ public class AuditLog {
     @Column(name = "entity_id", nullable = false)
     private String entityId;
 
-    @Column(name = "before_value", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "before_value")
     private String beforeValue;
 
-    @Column(name = "after_value", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "after_value")
     private String afterValue;
 
     @Column(name = "ip_address", length = 45)

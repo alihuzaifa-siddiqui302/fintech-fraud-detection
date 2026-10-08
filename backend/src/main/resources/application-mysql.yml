@@ -1,0 +1,108 @@
+# ==============================================================================
+# FraudGuard — MYSQL PROFILE
+# Active when: spring.profiles.active=mysql
+# Infrastructure: Local Docker container or external MySQL 8.0+ instance
+# ==============================================================================
+
+spring:
+  # ----------------------------------------------------------------------------
+  # MySQL — Local Docker container or external instance
+  # ----------------------------------------------------------------------------
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/fraudguard_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:rootpassword}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # ----------------------------------------------------------------------------
+  # Flyway Database Migration for MySQL (V1 → V6)
+  # ----------------------------------------------------------------------------
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/mysql
+    baseline-on-migrate: true
+
+  # ----------------------------------------------------------------------------
+  # Redis — Local Docker container (no TLS)
+  # ----------------------------------------------------------------------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          min-idle: 2
+
+  # ----------------------------------------------------------------------------
+  # Kafka — Local Docker container (PLAINTEXT, no auth)
+  # ----------------------------------------------------------------------------
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    admin:
+      fail-fast: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        compression.type: snappy
+    consumer:
+      group-id: fraudguard-main
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  # ----------------------------------------------------------------------------
+  # Mailtrap sandbox for 3DS OTP email testing
+  # ----------------------------------------------------------------------------
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+# ------------------------------------------------------------------------------
+# FraudGuard Configuration
+# ------------------------------------------------------------------------------
+fraudguard:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-insecure-jwt-secret-do-not-use-in-prod!}
+    expiry-ms: 86400000
+  external:
+    ipqualityscore:
+      api-key: ${IPQS_API_KEY:}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-2.0-flash}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  otp:
+    enabled: ${OTP_ENABLED:true}
+
+# ------------------------------------------------------------------------------
+# Logging
+# ------------------------------------------------------------------------------
+logging:
+  level:
+    com.fraudguard: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE

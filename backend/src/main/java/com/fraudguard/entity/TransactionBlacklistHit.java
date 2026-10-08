@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 public class TransactionBlacklistHit {
 
     @Id
-    @Column(name = "transaction_id", columnDefinition = "uuid", nullable = false)
+    @Column(name = "transaction_id", length = 36, nullable = false)
     private String transactionId;
 
     @Id
